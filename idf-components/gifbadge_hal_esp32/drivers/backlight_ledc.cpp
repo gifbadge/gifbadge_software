@@ -8,6 +8,8 @@
 #include "log.h"
 #include "drivers/backlight_ledc.h"
 
+#include <driver/gpio.h>
+
 static const char *TAG = "backlight_gpio.cpp";
 
 hal::backlight::esp32s3::backlight_ledc::backlight_ledc(gpio_num_t gpio, bool invert, int level) : lastLevel(level) {

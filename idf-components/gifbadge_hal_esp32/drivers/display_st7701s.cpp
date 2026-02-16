@@ -8,6 +8,7 @@
 #include "log.h"
 #include <driver/spi_master.h>
 #include <esp_lcd_panel_commands.h>
+#include <FreeRTOS.h>
 #include <task.h>
 #include <esp_lcd_panel_rgb.h>
 #include <esp_timer.h>

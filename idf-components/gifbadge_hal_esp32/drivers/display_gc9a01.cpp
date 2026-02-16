@@ -15,6 +15,8 @@
 
 #include "drivers/display_gc9a01.h"
 
+#include <esp_heap_caps.h>
+
 static const char *TAG = "display_gc9a01.cpp";
 
 hal::display::esp32s3::display_gc9a01::display_gc9a01(int mosi, int sck, int cs, int dc, int reset) {

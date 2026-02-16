@@ -7,6 +7,7 @@
 #pragma once
 
 #include <hal/backlight.h>
+#include <soc/gpio_num.h>
 
 namespace hal::backlight::esp32s3 {
 class backlight_ledc : public hal::backlight::Backlight {
