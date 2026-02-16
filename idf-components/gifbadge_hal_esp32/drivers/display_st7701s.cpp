@@ -160,20 +160,20 @@ hal::display::esp32s3::display_st7701s::display_st7701s(spi_line_config_t line_c
       },
 
       .data_width = 16,
-      .bits_per_pixel = 16,
+      // .bits_per_pixel = 16,
       .num_fbs = fb_number,
       .bounce_buffer_size_px = 0, //10*H_RES,
-      .sram_trans_align = 0,
-      .psram_trans_align = 64,
-      .hsync_gpio_num = hsync,
-      .vsync_gpio_num = vsync,
-      .de_gpio_num = de,
-      .pclk_gpio_num = pclk,
-      .disp_gpio_num = -1,
+      // .sram_trans_align = 0,
+      // .psram_trans_align = 64,
+      .hsync_gpio_num = static_cast<gpio_num_t>(hsync),
+      .vsync_gpio_num = static_cast<gpio_num_t>(vsync),
+      .de_gpio_num = static_cast<gpio_num_t>(de),
+      .pclk_gpio_num = static_cast<gpio_num_t>(pclk),
+      .disp_gpio_num = GPIO_NUM_NC,
 //            .data_gpio_nums = { B1, B2, B3, B4, B5, G0, G1, G2, G3, G4, G5, R1, R2, R3, R4, R5}, //Working BE
 //            .data_gpio_nums = {G3, G4, G5, R1, R2, R3, R4, R5, B1, B2, B3, B4, B5, G0, G1, G2}, //Working LE
-      .data_gpio_nums = {rgb[0], rgb[1], rgb[2], rgb[3], rgb[4], rgb[5], rgb[6], rgb[7], rgb[8], rgb[9], rgb[10],
-                         rgb[11], rgb[12], rgb[13], rgb[14], rgb[15]},
+      .data_gpio_nums = {static_cast<gpio_num_t>(rgb[0]), static_cast<gpio_num_t>(rgb[1]), static_cast<gpio_num_t>(rgb[2]), static_cast<gpio_num_t>(rgb[3]), static_cast<gpio_num_t>(rgb[4]), static_cast<gpio_num_t>(rgb[5]), static_cast<gpio_num_t>(rgb[6]), static_cast<gpio_num_t>(rgb[7]), static_cast<gpio_num_t>(rgb[8]), static_cast<gpio_num_t>(rgb[9]), static_cast<gpio_num_t>(rgb[10]),
+                         static_cast<gpio_num_t>(rgb[11]), static_cast<gpio_num_t>(rgb[12]), static_cast<gpio_num_t>(rgb[13]), static_cast<gpio_num_t>(rgb[14]), static_cast<gpio_num_t>(rgb[15])},
 
       .flags = {
           .disp_active_low = 0,

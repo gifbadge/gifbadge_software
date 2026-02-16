@@ -40,8 +40,8 @@ hal::display::esp32s3::display_gc9a01::display_gc9a01(int mosi, int sck, int cs,
 
   LOGI(TAG, "Install panel IO");
   esp_lcd_panel_io_spi_config_t io_config = {
-      .cs_gpio_num = cs, //47,
-      .dc_gpio_num = dc,//45,
+      .cs_gpio_num = static_cast<gpio_num_t>(cs), //47,
+      .dc_gpio_num = static_cast<gpio_num_t>(dc),//45,
       .spi_mode = 0,
       .pclk_hz = (80 * 1000 * 1000),
       .trans_queue_depth = 10,
@@ -64,15 +64,15 @@ hal::display::esp32s3::display_gc9a01::display_gc9a01(int mosi, int sck, int cs,
   ESP_ERROR_CHECK(esp_lcd_new_panel_io_spi((esp_lcd_spi_bus_handle_t) SPI2_HOST, &io_config, &io_handle));
 
   esp_lcd_panel_dev_config_t panel_config = {
-      .reset_gpio_num = reset,
-      .rgb_endian = LCD_RGB_ENDIAN_BGR,
-      // .rgb_ele_order = LCD_RGB_ELEMENT_ORDER_RGB,
+      // .rgb_endian = LCD_RGB_ENDIAN_BGR,
+      .rgb_ele_order = LCD_RGB_ELEMENT_ORDER_RGB,
       .data_endian = LCD_RGB_DATA_ENDIAN_BIG,
       .bits_per_pixel = 16,
+      .reset_gpio_num = static_cast<gpio_num_t>(reset),
+      .vendor_config = nullptr,
       .flags = {
           .reset_active_high = 0,
       },
-      .vendor_config = nullptr,
   };
 
   LOGI(TAG, "Install GC9A01 panel driver");
