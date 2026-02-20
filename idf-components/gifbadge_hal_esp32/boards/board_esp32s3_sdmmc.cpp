@@ -185,7 +185,7 @@ esp_err_t esp32::s3::esp32s3_sdmmc::mount(const gpio_num_t clk,
         },
         .do_not_format = true, .format_flags = 0
       },
-      .mount_point = TINYUSB_MSC_STORAGE_MOUNT_USB
+      .mount_point = TINYUSB_MSC_STORAGE_MOUNT_APP
     };
     ESP_ERROR_CHECK(tinyusb_msc_new_storage_sdmmc(&config_sdmmc, &storage_handle));
     ESP_ERROR_CHECK(esp32s3_usb_init(usb_sense));
