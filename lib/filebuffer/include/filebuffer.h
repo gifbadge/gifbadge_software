@@ -13,10 +13,12 @@ extern "C" {
 #endif
   enum FILEBUFFER_OPTIONS {
     FILEBUFFER_NONE,
+    FILEBUFFER_CLOSE,
+    FILEBUFFER_PAUSE,
     FILEBUFFER_STOP
   };
-  [[noreturn]] void FileBufferTask(void *);
-  void filebuffer_open(const char *path);
+  void FileBufferTask(void *);
+  bool filebuffer_open(const char *path);
   void filebuffer_close();
   int32_t filebuffer_read(uint8_t *pBuf, int32_t iLen);
   void filebuffer_seek(int32_t pos);

@@ -41,7 +41,9 @@ static void *OpenFile(const char *fname, int32_t *pSize) {
    *pSize = stats.st_size;
   fclose(infile);
 
-  filebuffer_open(fname);
+  if (!filebuffer_open(fname)) {
+    return nullptr;
+  }
   return reinterpret_cast<void *>(1);
 }
 
