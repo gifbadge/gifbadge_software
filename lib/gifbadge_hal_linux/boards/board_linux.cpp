@@ -107,7 +107,7 @@ Boards::WakeupSource board_linux::BootReason() {
   return Board::BootReason();
 }
 void board_linux::LateInit() {
-  _buffer = malloc(480 * 480 + 0x6100);
+  _buffer = malloc(_display->size.first*_display->size.second + 0x6100);
 
 }
 void board_linux::Reset() {

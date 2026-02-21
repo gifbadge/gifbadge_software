@@ -375,7 +375,7 @@ extern "C" int main(void) {
   console_print("test\n");
   signal( SIGINT, handle_sigint );
   signal( SIGTERM, handle_sigint );
-  auto display = display_sdl_init();
+  auto display = display_sdl_init({240, 240});
   auto keys = keys_sdl_init();
   auto touch = touch_sdl_init();
     xTaskCreate((void (*)(void*))app_main, "app_main", 10000, nullptr, 1, nullptr);

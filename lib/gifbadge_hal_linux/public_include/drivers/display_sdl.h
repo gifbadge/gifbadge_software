@@ -18,7 +18,7 @@ class display_sdl : public hal::display::Display {
  public:
   void clear() override;
 
-  display_sdl();
+  display_sdl(const std::pair<uint16_t, uint16_t> &_size);
   ~display_sdl() override;
 
   bool onColorTransDone(flushCallback_t) override;
@@ -34,7 +34,7 @@ class display_sdl : public hal::display::Display {
   SDL_GLContext context = nullptr;
   SDL_Texture* mask = nullptr;
 
-  sem_t mutex;
+  sem_t mutex{};
   flushCallback_t _callback = nullptr;
 };
 
@@ -42,6 +42,6 @@ class display_sdl : public hal::display::Display {
 
 
 }
-hal::display::oslinux::display_sdl *display_sdl_init();
+hal::display::oslinux::display_sdl *display_sdl_init(const std::pair<uint16_t, uint16_t> &_size);
 
 extern hal::display::oslinux::display_sdl *displaySdl;

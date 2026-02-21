@@ -14,21 +14,21 @@
 
 hal::display::oslinux::display_sdl *displaySdl = nullptr;
 
-hal::display::oslinux::display_sdl::display_sdl() {
+hal::display::oslinux::display_sdl::display_sdl(const std::pair<uint16_t, uint16_t> &_size) {
   sem_init(&mutex, 0, 0);
-  size = {480, 480};
-  buffer = static_cast<uint8_t *>(malloc(480*480*2));
+  size = _size;
+  buffer = static_cast<uint8_t *>(malloc(size.first*size.second*2));
   if (!SDL_Init(SDL_INIT_VIDEO|SDL_INIT_EVENTS)) {
     LOGI("hal::display::oslinux::display_sdl", "error initializing SDL: %s\n", SDL_GetError());
   }
 
-  win = SDL_CreateWindow("GAME",480, 480, 0);
+  win = SDL_CreateWindow("GAME",size.first, size.second, 0);
 
   renderer = SDL_CreateRenderer(win, nullptr);
   SDL_SetRenderDrawColor(renderer, 255, 255,
                          255, 255);
   SDL_RenderClear(renderer);
-  pixels = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, 480, 480);
+  pixels = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, size.first, size.second);
   mask = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, 480, 480);
   void *data;
   int pitch;
@@ -56,7 +56,7 @@ bool hal::display::oslinux::display_sdl::onColorTransDone(flushCallback_t callba
 }
 void hal::display::oslinux::display_sdl::write(int x_start, int y_start, int x_end, int y_end, void *color_data) {
   if (color_data != buffer) {
-    memcpy(buffer, color_data, 480 * 480 * 2);
+    memcpy(buffer, color_data, size.first*size.second*2);
   }
   sem_post(&mutex);
 }
@@ -66,7 +66,7 @@ void hal::display::oslinux::display_sdl::update() {
     int pitch;
     SDL_LockTexture(pixels, nullptr, &data, &pitch);
 
-    memcpy(data, buffer, 480 * 480 * 2);
+    memcpy(data, buffer, size.first*size.second*2);
 
     SDL_UnlockTexture(pixels);
 
@@ -84,7 +84,7 @@ void hal::display::oslinux::display_sdl::clear() {
 
 }
 
-hal::display::oslinux::display_sdl *display_sdl_init() {
-  displaySdl = new hal::display::oslinux::display_sdl();
+hal::display::oslinux::display_sdl *display_sdl_init(const std::pair<uint16_t, uint16_t> &_size) {
+  displaySdl = new hal::display::oslinux::display_sdl(_size);
   return displaySdl;
 }
