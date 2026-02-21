@@ -10,8 +10,6 @@
 #include "log.h"
 #include "hal/keys.h"
 #include <array>
-#include "FreeRTOS.h"
-#include "task.h"
 
 hal::keys::oslinux::keys_sdl *keysSdl;
 
@@ -22,31 +20,6 @@ hal::keys::oslinux::keys_sdl::keys_sdl() {
 }
 
 void hal::keys::oslinux::keys_sdl::poll() {
-  std::array<std::pair<SDL_Scancode, hal::keys::EVENT_CODE>, 3> keys = {{
-    {SDL_SCANCODE_DOWN, hal::keys::KEY_DOWN},
-    {SDL_SCANCODE_UP, hal::keys::KEY_UP},
-    {SDL_SCANCODE_SPACE, hal::keys::KEY_ENTER},
-}};
-
-  auto time = millis();
-
-  SDL_Event event;
-
-  /* Poll for events. SDL_PollEvent() returns 0 when there are no  */
-  /* more events on the event queue, our while loop will exit when */
-  /* that occurs.                                                  */
-  while (SDL_PollEvent(&event)) {
-    /* We are only worried about SDL_KEYDOWN and SDL_KEYUP events */
-    if (event.type == SDL_EVENT_KEY_DOWN || event.type == SDL_EVENT_KEY_UP) {
-      for (auto keycode : keys) {
-        if (event.key.scancode == keycode.first) {
-          LOGI("key_sdl", "key %i", keycode.first);
-
-        }
-      }
-    }
-  }
-  last = time;
 }
 void hal::keys::oslinux::keys_sdl::update(SDL_Event event) {
   std::array<std::pair<SDL_Scancode, hal::keys::EVENT_CODE>, 3> keys = {{
@@ -55,10 +28,10 @@ void hal::keys::oslinux::keys_sdl::update(SDL_Event event) {
     {SDL_SCANCODE_SPACE, hal::keys::KEY_ENTER},
 }};
   auto time = millis();
-  for (auto keycode : keys) {
-    if (event.key.scancode == keycode.first) {
-      LOGI("key_sdl", "key %i", keycode.first);
-      zmk_debounce_update(&_debounce_states[keycode.second],
+  for (auto [scancode, eventcode] : keys) {
+    if (event.key.scancode == scancode) {
+      LOGI("key_sdl", "key %i", scancode);
+      zmk_debounce_update(&_debounce_states[eventcode],
                         event.type == SDL_EVENT_KEY_DOWN,
                         static_cast<int>(time - last),
                         &_debounce_config);

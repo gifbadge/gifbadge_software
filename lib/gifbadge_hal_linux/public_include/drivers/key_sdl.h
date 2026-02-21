@@ -21,20 +21,20 @@ class keys_sdl : public hal::keys::Keys {
 
   int pollInterval() override { return 100; };
 
-  void poll();
+  void poll() override;
 
   void update(SDL_Event event);
 
  private:
 
-  zmk_debounce_state _debounce_states[KEY_MAX];
+  zmk_debounce_state _debounce_states[KEY_MAX]{};
   zmk_debounce_config _debounce_config = {0, 0};
-  hal::keys::EVENT_STATE _currentState[KEY_MAX];
-  TaskHandle_t _refreshTask;
+  hal::keys::EVENT_STATE _currentState[KEY_MAX]{};
+  TaskHandle_t _refreshTask{};
 
 
 
-  long last;
+  long last{};
 
 };
 }
