@@ -75,7 +75,9 @@ static void openMenu() {
 }
 
 void startInputTimer() {
-  ESP_ERROR_CHECK(esp_timer_start_periodic(inputTimer, 10 * 1000));
+  if (!esp_timer_is_active(inputTimer)) {
+    ESP_ERROR_CHECK(esp_timer_start_periodic(inputTimer, 10 * 1000));
+  }
 }
 
 static void inputTimerHandler(void *args) {
