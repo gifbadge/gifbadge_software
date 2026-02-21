@@ -13,6 +13,7 @@
 
 #include "ui/menu.h"
 
+#include <cassert>
 #include <input.h>
 #include <ui/usb_connected.h>
 
@@ -64,6 +65,7 @@ static bool flush_ready() {
 }
 
 static void flush_cb(lv_disp_t *, const lv_area_t *area, uint8_t *color_map) {
+  assert(disp != nullptr);
   cbData.display->write(
       area->x1,
       area->y1,
