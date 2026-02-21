@@ -139,7 +139,6 @@ static void BacklightSliderChangedCallback(lv_event_t *e) {
 }
 
 lv_obj_t *FileOptions() {
-  if (lvgl_lock(-1)) {
     LV_LOG_USER("FileOptions");
 
     auto config = get_board()->GetConfig();
@@ -282,9 +281,6 @@ lv_obj_t *FileOptions() {
     lv_obj_send_event(slideshow_button, EVENT_SLIDESHOW_DISABLED, nullptr);
     lv_file_list_scroll_to_view(cont_flex, 0);
 
-    lvgl_unlock();
     return cont_flex;
-  }
-  return nullptr;
 }
 }

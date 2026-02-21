@@ -18,7 +18,6 @@ static void exit_callback(lv_event_t *e) {
 }
 
 lv_obj_t *help() {
-  if (lvgl_lock(-1)) {
     new_group();
     lv_obj_t *cont_flex = lv_obj_create(lv_screen_active());
 
@@ -78,8 +77,5 @@ lv_obj_t *help() {
     lv_label_set_text(exit_label, "Exit");
     lv_obj_add_event_cb(exit_btn, exit_callback, LV_EVENT_CLICKED, cont_flex);
 
-    lvgl_unlock();
     return cont_flex;
-  }
-  return nullptr;
 }

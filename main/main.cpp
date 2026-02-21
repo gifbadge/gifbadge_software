@@ -196,8 +196,7 @@ extern "C" [[noreturn]] void app_main(void) {
         case MAIN_USB:
           xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_NOTIFY_USB, eSetValueWithOverwrite);
           vTaskDelay(100 / portTICK_PERIOD_MS);
-          lvgl_wake_up();
-          lvgl_usb_connected();
+          lvgl_usb_open();
           break;
         default:
           break;

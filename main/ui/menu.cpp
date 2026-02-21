@@ -14,6 +14,7 @@
 #include "ui/menu.h"
 
 #include <input.h>
+#include <ui/usb_connected.h>
 
 #include "hal/battery.h"
 #include "ui/main_menu.h"
@@ -31,7 +32,6 @@ static lv_disp_t *disp;
 static TaskHandle_t lvgl_task;
 static flushCbData cbData;
 static TimerHandle_t tickHandle;
-static SemaphoreHandle_t lvgl_mux = nullptr;
 static SemaphoreHandle_t flushSem;
 static SemaphoreHandle_t lvgl_open = nullptr;
 
@@ -78,170 +78,18 @@ void lv_tick(TimerHandle_t) {
   lv_tick_inc(portTICK_PERIOD_MS);
 }
 
-bool lvgl_lock(int timeout_ms) {
-  // Convert timeout in milliseconds to FreeRTOS ticks
-  // If `timeout_ms` is set to -1, the program will block until the condition is met
-  const TickType_t timeout_ticks = (timeout_ms == -1) ? portMAX_DELAY : pdMS_TO_TICKS(timeout_ms);
-  return xSemaphoreTakeRecursive(lvgl_mux, timeout_ticks) == pdTRUE;
-}
-
-void lvgl_unlock() {
-  xSemaphoreGiveRecursive(lvgl_mux);
-}
-
 void lvgl_close() {
   LOGI(TAG, "Close");
   get_board()->GetDisplay()->onColorTransDone(nullptr);
   startInputTimer();
 
-  if (lvgl_lock(-1)) {
-    destroy_screens();
-    lv_obj_clean(lv_layer_top());
-//        lv_disp_remove(disp);
-    lvgl_unlock();
-  }
+  destroy_screens();
+  lv_obj_clean(lv_layer_top());
 
   vTaskDelay(100 / portTICK_PERIOD_MS); //Wait some time so the task can finish
   // xTimerStop(tickHandle, 0);
   get_board()->PmRelease();
   LOGI(TAG, "Close Done");
-}
-
-void task(void *) {
-  bool running = true;
-  LOGI(TAG, "Starting LVGL task");
-  uint32_t task_delay_ms = 0;
-  vTaskSuspend(nullptr); //Wait until we are actually needed
-  TaskHandle_t display_task_handle = nullptr;
-
-  while (running) {
-    uint32_t option;
-    xTaskNotifyWaitIndexed(0, 0, 0xffffffff, &option, task_delay_ms / portTICK_PERIOD_MS);
-    switch (option) {
-      case LVGL_STOP:
-        LOGI(TAG, "LVGL_STOP");
-        lvgl_close();
-        xSemaphoreGive(lvgl_open);
-        if (cbData.display) {
-          vTaskDelay(200 / portTICK_PERIOD_MS);
-          cbData.display->clear();
-          cbData.display->write(0, 0, cbData.display->size.first, cbData.display->size.second, cbData.display->buffer);
-        }
-        display_task_handle = xTaskGetHandle("display_task");
-        xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_NONE, eSetValueWithOverwrite); //Notify the display task to redraw
-        vTaskSuspend(nullptr);
-        break;
-      case LVGL_EXIT:
-        running = false;
-        break;
-      case LVGL_RESUME:
-        xSemaphoreTake(lvgl_open, 100);
-        LOGI(TAG, "LVGL_RESUME");
-        break;
-      default:
-        if (lvgl_lock(-1)) {
-          task_delay_ms = lv_timer_handler();
-          // Release the mutex
-          lvgl_unlock();
-        }
-        if (task_delay_ms > LVGL_TASK_MAX_DELAY_MS) {
-          task_delay_ms = LVGL_TASK_MAX_DELAY_MS;
-        } else if (task_delay_ms < LVGL_TASK_MIN_DELAY_MS) {
-          task_delay_ms = LVGL_TASK_MIN_DELAY_MS;
-        }
-        break;
-    }
-  }
-}
-
-void keyboard_read(lv_indev_t *indev, lv_indev_data_t *data) {
-//    LOGI(TAG, "keyboard_read");
-  auto g = lv_indev_get_group(indev);
-  bool editing = lv_group_get_editing(g);
-  auto *device = static_cast<hal::keys::Keys *>(lv_indev_get_user_data(indev));
-  if(device) {
-    device->poll();
-    hal::keys::EVENT_STATE *keys = device->read();
-    if (keys[hal::keys::KEY_UP] == hal::keys::STATE_PRESSED) {
-      data->enc_diff += editing ? +1 : -1;
-    } else if (keys[hal::keys::KEY_DOWN] == hal::keys::STATE_PRESSED) {
-      data->enc_diff += editing ? -1 : +1;
-    } else if (keys[hal::keys::KEY_ENTER] == hal::keys::STATE_PRESSED || keys[hal::keys::KEY_ENTER] == hal::keys::STATE_HELD) {
-      data->state = LV_INDEV_STATE_PRESSED;
-    } else {
-      data->state = LV_INDEV_STATE_RELEASED;
-    }
-  }
-
-}
-
-bool lvgl_menu_state() {
-  if (xSemaphoreTake(lvgl_open, 0)) {
-    xSemaphoreGive(lvgl_open);
-    return false;
-  }
-  return true;
-}
-
-void touch_read(lv_indev_t *drv, lv_indev_data_t *data) {
-
-  auto touch = static_cast<hal::touch::Touch *>(lv_indev_get_driver_data(drv));
-  auto i = touch->read();
-  if (i.first > 0 && i.second > 0) {
-    data->point.x = static_cast<int32_t>(i.first);
-    data->point.y = static_cast<int32_t>(i.second);
-    data->state = LV_INDEV_STATE_PRESSED;
-  } else {
-    data->state = LV_INDEV_STATE_RELEASED;
-  }
-}
-
-static void flushWaitCb(lv_display_t *){
-  xSemaphoreTake(flushSem, portMAX_DELAY);
-}
-
-void lvgl_init(Boards::Board *board) {
-
-  lv_init();
-
-  lvgl_mux = xSemaphoreCreateRecursiveMutex();
-  flushSem = xSemaphoreCreateBinary();
-  lvgl_open = xSemaphoreCreateRecursiveMutex();
-
-#ifdef ESP_PLATFORM
-  // tickHandle = xTimerCreate("lvglTick", 5/portTICK_PERIOD_MS, pdTRUE, nullptr, lv_tick);
-  // auto *xTaskBuffer =  static_cast<StaticTask_t *>(heap_caps_malloc(sizeof(StaticTask_t), MALLOC_CAP_SPIRAM));
-  // auto *xStack = static_cast<StackType_t *>(heap_caps_malloc(7*1024, MALLOC_CAP_SPIRAM));
-  //
-  // lvgl_task = xTaskCreateStatic(task, "LVGL", 7*1024, nullptr, LVGL_TASK_PRIORITY, xStack, xTaskBuffer);
-  xTaskCreate(task, "LVGL", 7*1024, nullptr, LVGL_TASK_PRIORITY, &lvgl_task);
-#else
-  xTaskCreate(task, "LVGL", 7*1024, nullptr, LVGL_TASK_PRIORITY, &lvgl_task);
-#endif
-
-  disp = lv_display_create(board->GetDisplay()->size.first, board->GetDisplay()->size.second);
-  lv_display_set_flush_cb(disp, flush_cb);
-  lv_display_set_flush_wait_cb(disp, flushWaitCb);
-  lv_display_set_buffers(disp, board->GetDisplay()->buffer, nullptr,
-                         board->GetDisplay()->size.first * board->GetDisplay()->size.second * 2,
-                         LV_DISPLAY_RENDER_MODE_FULL);
-
-  style_init();
-  lvgl_encoder = lv_indev_create();
-  lv_indev_set_type(lvgl_encoder, LV_INDEV_TYPE_ENCODER);
-  lv_indev_set_user_data(lvgl_encoder, board->GetKeys());
-  lv_indev_set_read_cb(lvgl_encoder, keyboard_read);
-  lv_timer_set_period(lv_indev_get_read_timer(lvgl_encoder), 2);
-//
-//
-  if (board->GetTouch()) {
-    lvgl_touch = lv_indev_create();
-    lv_indev_set_type(lvgl_touch, LV_INDEV_TYPE_POINTER);
-    lv_indev_set_read_cb(lvgl_touch, touch_read);
-    lv_indev_set_driver_data(lvgl_touch, board->GetTouch());
-    lv_timer_set_period(lv_indev_get_read_timer(lvgl_touch), 10);
-  }
-
 }
 
 void battery_percent_update(lv_obj_t *widget) {
@@ -333,6 +181,153 @@ static void battery_widget(lv_obj_t *scr) {
 
 }
 
+void battery_draw() {
+  lv_group_t *g = lv_group_create();
+  lv_group_set_default(g);
+  lv_indev_set_group(lvgl_encoder, g);
+  lv_obj_t *scr = create_screen();
+  lv_screen_load(scr);
+  battery_widget(lv_layer_top());
+}
+
+void task(void *) {
+  bool running = true;
+  LOGI(TAG, "Starting LVGL task");
+  int32_t task_delay = -1;
+  TaskHandle_t display_task_handle = nullptr;
+
+  while (running) {
+    uint32_t option;
+    xTaskNotifyWaitIndexed(0, 0, 0xffffffff, &option, task_delay == -1 ? portMAX_DELAY : task_delay/portTICK_PERIOD_MS);
+    switch (option) {
+      case LVGL_STOP:
+        LOGI(TAG, "LVGL_STOP");
+        lvgl_close();
+        xSemaphoreGive(lvgl_open);
+        if (cbData.display) {
+          vTaskDelay(200 / portTICK_PERIOD_MS);
+          cbData.display->clear();
+          cbData.display->write(0, 0, cbData.display->size.first, cbData.display->size.second, cbData.display->buffer);
+        }
+        display_task_handle = xTaskGetHandle("display_task");
+        xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_NONE, eSetValueWithOverwrite); //Notify the display task to redraw
+        task_delay = -1; //Block until woken up
+        break;
+      case LVGL_EXIT:
+        running = false;
+        break;
+      case LVGL_RESUME_MENU:
+        task_delay = 0;
+        xSemaphoreTake(lvgl_open, 100);
+        battery_draw();
+        main_menu();
+        LOGI(TAG, "LVGL_RESUME");
+        break;
+      case LVGL_RESUME_USB:
+        task_delay = 0;
+        xSemaphoreTake(lvgl_open, 100);
+        battery_draw();
+        lvgl_usb_connected();
+        LOGI(TAG, "LVGL_RESUME");
+        break;
+      default:
+        task_delay = static_cast<int32_t>(lv_timer_handler());
+        if (task_delay > LVGL_TASK_MAX_DELAY_MS) {
+          task_delay = LVGL_TASK_MAX_DELAY_MS;
+        } else if (task_delay < LVGL_TASK_MIN_DELAY_MS) {
+          task_delay = LVGL_TASK_MIN_DELAY_MS;
+        }
+        break;
+    }
+  }
+}
+
+void keyboard_read(lv_indev_t *indev, lv_indev_data_t *data) {
+//    LOGI(TAG, "keyboard_read");
+  auto g = lv_indev_get_group(indev);
+  bool editing = lv_group_get_editing(g);
+  auto *device = static_cast<hal::keys::Keys *>(lv_indev_get_user_data(indev));
+  if(device) {
+    device->poll();
+    hal::keys::EVENT_STATE *keys = device->read();
+    if (keys[hal::keys::KEY_UP] == hal::keys::STATE_PRESSED) {
+      data->enc_diff += editing ? +1 : -1;
+    } else if (keys[hal::keys::KEY_DOWN] == hal::keys::STATE_PRESSED) {
+      data->enc_diff += editing ? -1 : +1;
+    } else if (keys[hal::keys::KEY_ENTER] == hal::keys::STATE_PRESSED || keys[hal::keys::KEY_ENTER] == hal::keys::STATE_HELD) {
+      data->state = LV_INDEV_STATE_PRESSED;
+    } else {
+      data->state = LV_INDEV_STATE_RELEASED;
+    }
+  }
+
+}
+
+bool lvgl_menu_state() {
+  if (xSemaphoreTake(lvgl_open, 0)) {
+    xSemaphoreGive(lvgl_open);
+    return false;
+  }
+  return true;
+}
+
+void touch_read(lv_indev_t *drv, lv_indev_data_t *data) {
+
+  auto touch = static_cast<hal::touch::Touch *>(lv_indev_get_driver_data(drv));
+  auto i = touch->read();
+  if (i.first > 0 && i.second > 0) {
+    data->point.x = static_cast<int32_t>(i.first);
+    data->point.y = static_cast<int32_t>(i.second);
+    data->state = LV_INDEV_STATE_PRESSED;
+  } else {
+    data->state = LV_INDEV_STATE_RELEASED;
+  }
+}
+
+static void flushWaitCb(lv_display_t *){
+  xSemaphoreTake(flushSem, portMAX_DELAY);
+}
+
+void lvgl_init(Boards::Board *board) {
+
+  lv_init();
+
+  flushSem = xSemaphoreCreateBinary();
+  lvgl_open = xSemaphoreCreateMutex();
+
+#ifdef ESP_PLATFORM
+  xTaskCreate(task, "LVGL", 7*1024, nullptr, LVGL_TASK_PRIORITY, &lvgl_task);
+#else
+  xTaskCreate(task, "LVGL", 7*1024, nullptr, LVGL_TASK_PRIORITY, &lvgl_task);
+#endif
+
+  disp = lv_display_create(board->GetDisplay()->size.first, board->GetDisplay()->size.second);
+  lv_display_set_flush_cb(disp, flush_cb);
+  lv_display_set_flush_wait_cb(disp, flushWaitCb);
+  lv_display_set_buffers(disp, board->GetDisplay()->buffer, nullptr,
+                         board->GetDisplay()->size.first * board->GetDisplay()->size.second * 2,
+                         LV_DISPLAY_RENDER_MODE_FULL);
+
+  style_init();
+  lvgl_encoder = lv_indev_create();
+  lv_indev_set_type(lvgl_encoder, LV_INDEV_TYPE_ENCODER);
+  lv_indev_set_user_data(lvgl_encoder, board->GetKeys());
+  lv_indev_set_read_cb(lvgl_encoder, keyboard_read);
+  lv_timer_set_period(lv_indev_get_read_timer(lvgl_encoder), 2);
+//
+//
+  if (board->GetTouch()) {
+    lvgl_touch = lv_indev_create();
+    lv_indev_set_type(lvgl_touch, LV_INDEV_TYPE_POINTER);
+    lv_indev_set_read_cb(lvgl_touch, touch_read);
+    lv_indev_set_driver_data(lvgl_touch, board->GetTouch());
+    lv_timer_set_period(lv_indev_get_read_timer(lvgl_touch), 10);
+  }
+
+}
+
+
+
 void lvgl_wake_up() {
   if (xSemaphoreTake(lvgl_open, 100)) {
     xSemaphoreGive(lvgl_open);
@@ -344,27 +339,18 @@ void lvgl_wake_up() {
     cbData.callbackEnabled = cbData.display->onColorTransDone(flush_ready);
 
     xSemaphoreGive(flushSem);
-    vTaskResume(lvgl_task);
-    xTaskNotifyIndexed(lvgl_task, 0, LVGL_RESUME, eSetValueWithOverwrite);
-
-    // xTimerStart(tickHandle, 0);
-
-    if (lvgl_lock(-1)) {
-      lv_group_t *g = lv_group_create();
-      lv_group_set_default(g);
-      lv_indev_set_group(lvgl_encoder, g);
-      lv_obj_t *scr = create_screen();
-      lv_screen_load(scr);
-      battery_widget(lv_layer_top());
-      lvgl_unlock();
-    }
     LOGI(TAG, "Wakeup Done");
   }
 }
 
 void lvgl_menu_open() {
   lvgl_wake_up();
-  main_menu();
+  xTaskNotifyIndexed(lvgl_task, 0, LVGL_RESUME_MENU, eSetValueWithOverwrite);
+}
+
+void lvgl_usb_open() {
+  lvgl_wake_up();
+  xTaskNotifyIndexed(lvgl_task, 0, LVGL_RESUME_USB, eSetValueWithOverwrite);
 }
 
 

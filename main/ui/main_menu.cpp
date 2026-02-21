@@ -101,7 +101,6 @@ static lv_obj_t *subMenu(lv_obj_t *parent, const char *name, MenuType menu){
 }
 
 void main_menu() {
-  if (lvgl_lock(-1)) {
     lv_obj_t *scr = lv_scr_act();
     new_group();
     lv_obj_t *main_menu = lv_file_list_create(scr);
@@ -139,7 +138,5 @@ void main_menu() {
     lv_obj_add_event_cb(scr, mainMenuCleanup, LV_EVENT_DELETE, lv_group_get_default());
 
     lv_file_list_scroll_to_view(main_menu, 0);
-    lvgl_unlock();
-  }
 }
 

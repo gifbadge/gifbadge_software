@@ -165,72 +165,68 @@ static void clear_cache(lv_event_t *e) {
 }
 
 lv_obj_t *storage_menu() {
-  if (lvgl_lock(-1)) {
-    new_group();
-    lv_obj_t *cont_flex = lv_file_list_create(lv_scr_act());
-    lv_file_list_icon_style(cont_flex, &icon_style);
+  new_group();
+  lv_obj_t *cont_flex = lv_file_list_create(lv_scr_act());
+  lv_file_list_icon_style(cont_flex, &icon_style);
 
-    StorageInfo info = get_board()->GetStorageInfo();
+  StorageInfo info = get_board()->GetStorageInfo();
 
-    auto *fields = static_cast<StorageFields *>(malloc(sizeof(StorageFields)));
-    assert(fields != nullptr);
-    fields->container = cont_flex;
+  auto *fields = static_cast<StorageFields *>(malloc(sizeof(StorageFields)));
+  assert(fields != nullptr);
+  fields->container = cont_flex;
 
-    lv_obj_t *size_btn;
-    switch (info.type) {
-      case StorageType_None:
-        size_btn = lv_file_list_add(cont_flex, nullptr);
-        break;
-      case StorageType_SPI:
-        size_btn = lv_file_list_add(cont_flex, "\uf80e");
-        break;
-      case StorageType_SDIO:
-      case StorageType_MMC:
-      case StorageType_SD:
-      case StorageType_SDHC:
-        size_btn = lv_file_list_add(cont_flex, "\ue623");
-        break;
-      default:
-        size_btn = lv_file_list_add(cont_flex, nullptr);
-        break;
-    }
-    lv_obj_t *space_bar = lv_bar_create(size_btn);
-    fields->space_bar = space_bar;
-    lv_obj_set_style_bg_color(space_bar, lv_color_white(), LV_PART_INDICATOR);
-    lv_obj_set_style_bg_color(space_bar, lv_color_black(), LV_PART_MAIN);
-    lv_obj_set_flex_grow(space_bar, 1);
-    lv_bar_set_range(space_bar, 0, 100);
-    lv_obj_t *size_label = lv_label_create(space_bar);
-    fields->space_label = size_label;
-    lv_obj_center(size_label);
-
-    lv_obj_t *format_btn = lv_file_list_add(cont_flex, nullptr);
-    lv_obj_add_style(format_btn, &menu_font_style, LV_PART_MAIN);
-    lv_obj_t *format_label = lv_label_create(format_btn);
-    lv_label_set_text(format_label, "Format Storage");
-
-    lv_obj_t *clear_cache_btn = lv_file_list_add(cont_flex, nullptr);
-    lv_obj_add_style(clear_cache_btn, &menu_font_style, LV_PART_MAIN);
-    lv_obj_t *clear_cache_label = lv_label_create(clear_cache_btn);
-    lv_label_set_text(clear_cache_label, "Clear Image Cache");
-
-    lv_obj_t *exit_button = lv_file_list_add(cont_flex, "\ue5c9");
-    lv_obj_t *exit = lv_obj_create(exit_button);
-    lv_obj_add_flag(exit, LV_OBJ_FLAG_HIDDEN);
-    lv_group_remove_obj(exit);
-
-    lv_obj_add_event_cb(format_btn, StorageFormat, LV_EVENT_CLICKED, cont_flex);
-    lv_obj_add_event_cb(clear_cache_btn, clear_cache, LV_EVENT_CLICKED, cont_flex);
-    lv_obj_add_event_cb(exit, StorageExit, LV_EVENT_CLICKED, fields);
-    lv_obj_add_event_cb(cont_flex, StorageRefresh, LV_EVENT_REFRESH, fields);
-    lv_obj_send_event(cont_flex, LV_EVENT_REFRESH, nullptr);
-
-    lv_file_list_scroll_to_view(cont_flex, 0);
-
-    lvgl_unlock();
-    return cont_flex;
+  lv_obj_t *size_btn;
+  switch (info.type) {
+    case StorageType_None:
+      size_btn = lv_file_list_add(cont_flex, nullptr);
+      break;
+    case StorageType_SPI:
+      size_btn = lv_file_list_add(cont_flex, "\uf80e");
+      break;
+    case StorageType_SDIO:
+    case StorageType_MMC:
+    case StorageType_SD:
+    case StorageType_SDHC:
+      size_btn = lv_file_list_add(cont_flex, "\ue623");
+      break;
+    default:
+      size_btn = lv_file_list_add(cont_flex, nullptr);
+      break;
   }
-  return nullptr;
+  lv_obj_t *space_bar = lv_bar_create(size_btn);
+  fields->space_bar = space_bar;
+  lv_obj_set_style_bg_color(space_bar, lv_color_white(), LV_PART_INDICATOR);
+  lv_obj_set_style_bg_color(space_bar, lv_color_black(), LV_PART_MAIN);
+  lv_obj_set_flex_grow(space_bar, 1);
+  lv_bar_set_range(space_bar, 0, 100);
+  lv_obj_t *size_label = lv_label_create(space_bar);
+  fields->space_label = size_label;
+  lv_obj_center(size_label);
+
+  lv_obj_t *format_btn = lv_file_list_add(cont_flex, nullptr);
+  lv_obj_add_style(format_btn, &menu_font_style, LV_PART_MAIN);
+  lv_obj_t *format_label = lv_label_create(format_btn);
+  lv_label_set_text(format_label, "Format Storage");
+
+  lv_obj_t *clear_cache_btn = lv_file_list_add(cont_flex, nullptr);
+  lv_obj_add_style(clear_cache_btn, &menu_font_style, LV_PART_MAIN);
+  lv_obj_t *clear_cache_label = lv_label_create(clear_cache_btn);
+  lv_label_set_text(clear_cache_label, "Clear Image Cache");
+
+  lv_obj_t *exit_button = lv_file_list_add(cont_flex, "\ue5c9");
+  lv_obj_t *exit = lv_obj_create(exit_button);
+  lv_obj_add_flag(exit, LV_OBJ_FLAG_HIDDEN);
+  lv_group_remove_obj(exit);
+
+  lv_obj_add_event_cb(format_btn, StorageFormat, LV_EVENT_CLICKED, cont_flex);
+  lv_obj_add_event_cb(clear_cache_btn, clear_cache, LV_EVENT_CLICKED, cont_flex);
+  lv_obj_add_event_cb(exit, StorageExit, LV_EVENT_CLICKED, fields);
+  lv_obj_add_event_cb(cont_flex, StorageRefresh, LV_EVENT_REFRESH, fields);
+  lv_obj_send_event(cont_flex, LV_EVENT_REFRESH, nullptr);
+
+  lv_file_list_scroll_to_view(cont_flex, 0);
+
+  return cont_flex;
 }
 
 #else

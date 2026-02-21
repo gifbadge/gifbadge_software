@@ -25,7 +25,6 @@ lv_obj_t *refresh_widget(lv_obj_t *parent, void (*f) (lv_event_t *e)){
 }
 
 lv_obj_t *device_info() {
-  if (lvgl_lock(-1)) {
     new_group();
     lv_obj_t *cont_flex = lv_file_list_create(lv_scr_act());
     lv_file_list_icon_style(cont_flex, &icon_style);
@@ -147,8 +146,5 @@ lv_obj_t *device_info() {
 
     lv_file_list_scroll_to_view(cont_flex, 0);
 
-    lvgl_unlock();
     return cont_flex;
-  }
-  return nullptr;
 }
