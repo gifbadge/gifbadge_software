@@ -32,7 +32,6 @@ static const char *TAG = "MENU";
 static lv_disp_t *disp;
 static TaskHandle_t lvgl_task;
 static flushCbData cbData;
-static TimerHandle_t tickHandle;
 static SemaphoreHandle_t flushSem;
 static SemaphoreHandle_t lvgl_open = nullptr;
 
@@ -89,7 +88,6 @@ void lvgl_close() {
   lv_obj_clean(lv_layer_top());
 
   vTaskDelay(100 / portTICK_PERIOD_MS); //Wait some time so the task can finish
-  // xTimerStop(tickHandle, 0);
   get_board()->PmRelease();
   LOGI(TAG, "Close Done");
 }
@@ -139,7 +137,6 @@ static void battery_widget(lv_obj_t *scr) {
   lv_obj_set_user_data(bar, get_board()->GetBattery());
 
 
-  //TODO: See why this causes a freeze in LVGL
   lv_obj_add_event_cb(bar, [](lv_event_t *e) {
     battery_percent_update(static_cast<lv_obj_t *>(lv_event_get_target(e)));
   }, LV_EVENT_REFRESH, nullptr);
@@ -166,7 +163,6 @@ static void battery_widget(lv_obj_t *scr) {
 
   lv_obj_set_user_data(battery_symbol_cont, get_board()->GetBattery());
 
-  //TODO: See why this causes a freeze in LVGL
   lv_obj_add_event_cb(battery_symbol_cont, [](lv_event_t *e) {
     battery_symbol_update(static_cast<lv_obj_t *>(lv_event_get_target(e)));
   }, LV_EVENT_REFRESH, nullptr);
@@ -245,7 +241,6 @@ void task(void *) {
 }
 
 void keyboard_read(lv_indev_t *indev, lv_indev_data_t *data) {
-//    LOGI(TAG, "keyboard_read");
   auto g = lv_indev_get_group(indev);
   bool editing = lv_group_get_editing(g);
   auto *device = static_cast<hal::keys::Keys *>(lv_indev_get_user_data(indev));
@@ -291,7 +286,6 @@ static void flushWaitCb(lv_display_t *){
 }
 
 void lvgl_init(Boards::Board *board) {
-
   lv_init();
 
   flushSem = xSemaphoreCreateBinary();
@@ -316,8 +310,7 @@ void lvgl_init(Boards::Board *board) {
   lv_indev_set_user_data(lvgl_encoder, board->GetKeys());
   lv_indev_set_read_cb(lvgl_encoder, keyboard_read);
   lv_timer_set_period(lv_indev_get_read_timer(lvgl_encoder), 2);
-//
-//
+
   if (board->GetTouch()) {
     lvgl_touch = lv_indev_create();
     lv_indev_set_type(lvgl_touch, LV_INDEV_TYPE_POINTER);
