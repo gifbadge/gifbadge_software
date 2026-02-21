@@ -394,7 +394,7 @@ extern "C" int main(void) {
   auto display = display_sdl_init({240, 240});
   auto keys = keys_sdl_init();
   auto touch = touch_sdl_init();
-    xTaskCreate((void (*)(void*))app_main, "app_main", 10000, nullptr, 1, nullptr);
+  xTaskCreate(reinterpret_cast<void (*)(void *)>(app_main), "app_main", 10000, nullptr, 1, nullptr);
   std::thread schedular([](){
     vTaskStartScheduler();
   });
