@@ -19,16 +19,40 @@
 
 static const char *TAG = "MAIN";
 
+#ifdef CONFIG_FREERTOS_GENERATE_RUN_TIME_STATS
 TaskStatus_t tasks[20];
+
+const char *taskState(eTaskState i) {
+  switch (i) {
+    case eRunning:
+      return "eRunning";
+    case eReady:
+      return "eReady";
+    case eBlocked:
+      return "eBlocked";
+    case eSuspended:
+      return "eSuspended";
+    case eDeleted:
+      return "eDeleted";
+    case eInvalid:
+      return "eInvalid";
+    default:
+      return "Unknown";
+  }
+}
+
+#endif
 
 void dumpDebugFunc(TimerHandle_t) {
   auto *args = get_board();
   args->PmLock();
   args->DebugInfo();
-  // unsigned int count = uxTaskGetSystemState(tasks, 20, nullptr);
-  // for (unsigned int i = 0; i < count; i++) {
-  //   LOGI(TAG, "%s Highwater: %lu", tasks[i].pcTaskName, tasks[i].usStackHighWaterMark);
-  // }
+#ifdef CONFIG_FREERTOS_GENERATE_RUN_TIME_STATS
+  unsigned int count = uxTaskGetSystemState(tasks, 20, nullptr);
+  for (unsigned int i = 0; i < count; i++) {
+    LOGI(TAG, "%s State: %s, Highwater: %lu, Runtime: %lu", tasks[i].pcTaskName, taskState(tasks[i].eCurrentState), tasks[i].usStackHighWaterMark, tasks[i].ulRunTimeCounter);
+  }
+#endif
   args->PmRelease();
 
 }
