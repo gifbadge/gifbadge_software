@@ -23,6 +23,8 @@
 
 class board_linux : public Boards::Board {
  public:
+  size_t MemorySize() override {return 4096*1024;};
+
   hal::charger::Charger * GetCharger() override;
   void BootInfo() override;
   bool OtaCheck() override;
