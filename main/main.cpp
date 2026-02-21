@@ -363,13 +363,13 @@ void handle_sigint(int) {
 
 extern "C" int main(void) {
   //chroot the process, so it's closer to being on the device for paths, etc
-  char path[255];
-  getcwd(path, sizeof(path));
-  printf("Chrooting to %s\n", path);
-  unshare(CLONE_FS|CLONE_NEWUSER);
-  chroot(path);
-  chdir("/");
-  mkdir("/data", 0700);
+  // char path[255];
+  // getcwd(path, sizeof(path));
+  // printf("Chrooting to %s\n", path);
+  // unshare(CLONE_FS|CLONE_NEWUSER);
+  // chroot(path);
+  // chdir("/");
+  // mkdir("/data", 0700);
 
   console_init();
   console_print("test\n");

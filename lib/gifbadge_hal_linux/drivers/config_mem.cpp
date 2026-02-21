@@ -44,5 +44,8 @@ void hal::config::oslinux::Config_Mem::save() {
 
 }
 hal::config::oslinux::Config_Mem::Config_Mem() {
+  getcwd(_path, sizeof(_path));
+  strcat(_path, "/");
+  strcat(_path, "data");
 //  getcwd(_path, sizeof(_path));
 }

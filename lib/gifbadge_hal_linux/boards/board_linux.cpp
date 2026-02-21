@@ -33,6 +33,8 @@ board_linux::board_linux() {
   assert(_touch != nullptr);
 
   getcwd(_storagePath, 128);
+  strcat(_storagePath, "/");
+  strcat(_storagePath, "data");
 
 
 
