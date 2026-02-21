@@ -361,6 +361,22 @@ void handle_sigint(int) {
   xTaskCreate(die, "die", 10000, nullptr, 1, nullptr);
 }
 
+bool usbState = false;
+
+static void usbCall(){
+  TaskHandle_t mainHandle = xTaskGetHandle("app_main");
+  usbState = !usbState;
+  if(usbState){
+    currentState = MAIN_USB;
+    TaskHandle_t display_task_handle = xTaskGetHandle("display_task");
+    xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_NOTIFY_USB, eSetValueWithOverwrite);
+    xTaskNotifyIndexed(mainHandle, 0, 0, eSetValueWithOverwrite);
+  } else{
+    currentState = MAIN_NORMAL;
+    xTaskNotifyIndexed(mainHandle, 0, 0, eSetValueWithOverwrite);
+  }
+}
+
 extern "C" int main(void) {
   //chroot the process, so it's closer to being on the device for paths, etc
   // char path[255];
@@ -393,7 +409,11 @@ extern "C" int main(void) {
     while (SDL_PollEvent(&event)) {
       /* We are only worried about SDL_KEYDOWN and SDL_KEYUP events */
       if (event.type == SDL_EVENT_KEY_DOWN || event.type == SDL_EVENT_KEY_UP) {
-        keys->update(event);
+        if ( event.key.scancode == SDL_SCANCODE_U && event.type == SDL_EVENT_KEY_UP) {
+          usbCall();
+        } else {
+          keys->update(event);
+        }
       }
       else if (event.type ==SDL_EVENT_MOUSE_MOTION ||event.type == SDL_EVENT_MOUSE_BUTTON_DOWN ||event.type == SDL_EVENT_MOUSE_BUTTON_UP) {
         touch->update(event);
