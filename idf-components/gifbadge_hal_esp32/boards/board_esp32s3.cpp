@@ -51,6 +51,7 @@ void esp32s3::DebugInfo() {
   ESP_LOGI(TAG, "Free PSRAM: %d", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
   ESP_LOGI(TAG, "Free Internal: %d", heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
   ESP_LOGI(TAG, "Largest Free Block for DMA: %d", heap_caps_get_largest_free_block(MALLOC_CAP_DMA));
+  ESP_LOGI(TAG, "USB State: %d", UsbConnected());
 }
 
 const char *esp32s3::SwVersion() {
