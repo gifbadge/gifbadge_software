@@ -480,7 +480,7 @@ void display_task(void *params) {
 
   LOGI(TAG, "Display Resolution %ix%i", display->size.first, display->size.second);
 
-  uint32_t delay = 1000/portTICK_PERIOD_MS; //Delay for display loop. Is adjusted by the results of the loop method of the image being displayed
+  int32_t delay = 1000/portTICK_PERIOD_MS; //Delay for display loop. Is adjusted by the results of the loop method of the image being displayed
   bool redraw = false; //Reload from configuration next time we go to display an image
   bool advance = false; //Advance the slideshow
   bool endOfFrame = false; //Last frame of animation
@@ -488,15 +488,11 @@ void display_task(void *params) {
   char current_file[MAX_FILE_LEN + 1]; //The current file path that has been selected
   config->getPath(current_file);
   char card_path[MAX_FILE_LEN + 1];
+  uint32_t option = 0;
   while (true) {
-    uint32_t option;
-    xTaskNotifyWaitIndexed(0, 0, 0xffffffff, &option, delay);
-    while (board->UsbConnected()) {
-      //If USB connected, clear any open files. Block until USB disconnected
-      in.reset();
-      closedir_sorted(&dir);
-      vTaskDelay(100 / portTICK_PERIOD_MS);
-    }
+    option = 0;
+    if (xTaskNotifyWaitIndexed(0, 0, 0xffffffff, &option, delay == -1 ? portMAX_DELAY : delay)) {
+      LOGD(TAG, "Woken up id: %d, Reset: %s", option & ~noResetBit, !(option & noResetBit)?"True":"False");
     if (option != DISPLAY_NONE) {
       config->reload();
       if (!(option & noResetBit)) {
@@ -561,7 +557,8 @@ void display_task(void *params) {
           redraw = true;
           // Something has changed in the configuration, reopen the configured file.
           config->getPath(current_file);
-          break;
+          delay = -1;
+          continue;
         case DISPLAY_NOTIFY_USB:
           closedir_sorted(&dir);
           dir.dirptr = nullptr;
@@ -573,16 +570,15 @@ void display_task(void *params) {
           xTimerDelete(slideShowTimer, 0);
           in.reset();
           vTaskDelete(nullptr);
+          return;
+        case DISPLAY_MENU:
+          delay = -1;
+          LOGD("TAG", "Display menu");
+          continue;
         default:
           break;
       }
     }
-    delay = 1000/portTICK_PERIOD_MS;
-
-    if (lvgl_menu_state()) {
-      //Go back to the top if the menu is open
-      redraw = true;
-      continue;
     }
 
     if (redraw) {

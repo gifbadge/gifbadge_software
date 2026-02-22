@@ -222,9 +222,6 @@ extern "C" [[noreturn]] void app_main(void) {
               currentState = MAIN_OTA;
               break;
             }
-            else {
-              xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_FILE, eSetValueWithOverwrite);
-            }
           }
           break;
         case MAIN_USB:

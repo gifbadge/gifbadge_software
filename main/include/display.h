@@ -30,8 +30,9 @@ enum DISPLAY_OPTIONS {
   DISPLAY_SPECIAL_2 = 8,
   DISPLAY_NOTIFY_CHANGE = 9,
   DISPLAY_NOTIFY_USB = 10,
-  DISPLAY_ADVANCE = 11,
+  DISPLAY_ADVANCE = 11| noResetBit,
   DISPLAY_STOP = 12,
+  DISPLAY_MENU = 13,
 };
 
 void display_task(void *params);

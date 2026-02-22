@@ -33,7 +33,6 @@ static lv_disp_t *disp;
 static TaskHandle_t lvgl_task;
 static flushCbData cbData;
 static SemaphoreHandle_t flushSem;
-static SemaphoreHandle_t lvgl_open = nullptr;
 
 //Exported Variables
 extern "C" {
@@ -87,7 +86,6 @@ void lvgl_close() {
   destroy_screens();
   lv_obj_clean(lv_layer_top());
 
-  vTaskDelay(100 / portTICK_PERIOD_MS); //Wait some time so the task can finish
   get_board()->PmRelease();
   LOGI(TAG, "Close Done");
 }
@@ -188,6 +186,18 @@ void battery_draw() {
   battery_widget(lv_layer_top());
 }
 
+static void lvgl_wake_up() {
+    LOGI(TAG, "Wakeup");
+    get_board()->PmLock();
+
+    cbData.display = get_board()->GetDisplay();
+
+    cbData.callbackEnabled = cbData.display->onColorTransDone(flush_ready);
+
+    xSemaphoreGive(flushSem);
+    LOGI(TAG, "Wakeup Done");
+}
+
 void task(void *) {
   bool running = true;
   LOGI(TAG, "Starting LVGL task");
@@ -196,34 +206,38 @@ void task(void *) {
 
   while (running) {
     uint32_t option;
-    xTaskNotifyWaitIndexed(0, 0, 0xffffffff, &option, task_delay == -1 ? portMAX_DELAY : task_delay/portTICK_PERIOD_MS);
+    xTaskNotifyWaitIndexed(0, 0, 0xffffffff, &option, task_delay == -1 ? portMAX_DELAY : task_delay);
     switch (option) {
       case LVGL_STOP:
         LOGI(TAG, "LVGL_STOP");
         lvgl_close();
-        xSemaphoreGive(lvgl_open);
         if (cbData.display) {
           vTaskDelay(200 / portTICK_PERIOD_MS);
           cbData.display->clear();
           cbData.display->write(0, 0, cbData.display->size.first, cbData.display->size.second, cbData.display->buffer);
         }
         display_task_handle = xTaskGetHandle("display_task");
-        xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_NONE, eSetValueWithOverwrite); //Notify the display task to redraw
+        xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_FILE, eSetValueWithOverwrite); //Notify the display task to redraw
         task_delay = -1; //Block until woken up
+        LOGI(TAG, "LVGL_STOP done");
         break;
       case LVGL_EXIT:
         running = false;
         break;
       case LVGL_RESUME_MENU:
+        lvgl_wake_up();
         task_delay = 0;
-        xSemaphoreTake(lvgl_open, 100);
+        display_task_handle = xTaskGetHandle("display_task");
+        xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_MENU, eSetValueWithOverwrite);
         battery_draw();
         main_menu();
         LOGI(TAG, "LVGL_RESUME");
         break;
       case LVGL_RESUME_USB:
+        lvgl_wake_up();
         task_delay = 0;
-        xSemaphoreTake(lvgl_open, 100);
+        display_task_handle = xTaskGetHandle("display_task");
+        xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_MENU, eSetValueWithOverwrite);
         battery_draw();
         lvgl_usb_connected();
         LOGI(TAG, "LVGL_RESUME");
@@ -260,14 +274,6 @@ void keyboard_read(lv_indev_t *indev, lv_indev_data_t *data) {
 
 }
 
-bool lvgl_menu_state() {
-  if (xSemaphoreTake(lvgl_open, 0)) {
-    xSemaphoreGive(lvgl_open);
-    return false;
-  }
-  return true;
-}
-
 void touch_read(lv_indev_t *drv, lv_indev_data_t *data) {
 
   auto touch = static_cast<hal::touch::Touch *>(lv_indev_get_driver_data(drv));
@@ -289,7 +295,6 @@ void lvgl_init(Boards::Board *board) {
   lv_init();
 
   flushSem = xSemaphoreCreateBinary();
-  lvgl_open = xSemaphoreCreateMutex();
 
 #ifdef ESP_PLATFORM
   xTaskCreate(task, "LVGL", 7*1024, nullptr, LVGL_TASK_PRIORITY, &lvgl_task);
@@ -323,28 +328,13 @@ void lvgl_init(Boards::Board *board) {
 
 
 
-void lvgl_wake_up() {
-  if (xSemaphoreTake(lvgl_open, 100)) {
-    xSemaphoreGive(lvgl_open);
-    LOGI(TAG, "Wakeup");
-    get_board()->PmLock();
 
-    cbData.display = get_board()->GetDisplay();
-
-    cbData.callbackEnabled = cbData.display->onColorTransDone(flush_ready);
-
-    xSemaphoreGive(flushSem);
-    LOGI(TAG, "Wakeup Done");
-  }
-}
 
 void lvgl_menu_open() {
-  lvgl_wake_up();
   xTaskNotifyIndexed(lvgl_task, 0, LVGL_RESUME_MENU, eSetValueWithOverwrite);
 }
 
 void lvgl_usb_open() {
-  lvgl_wake_up();
   xTaskNotifyIndexed(lvgl_task, 0, LVGL_RESUME_USB, eSetValueWithOverwrite);
 }
 

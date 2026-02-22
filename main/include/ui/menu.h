@@ -45,7 +45,6 @@ enum LVGL_TASK_SIGNALS {
 };
 
 void lvgl_init(Boards::Board *);
-void lvgl_wake_up();
 void lvgl_menu_open();
 bool lvgl_menu_state();
 void lvgl_usb_open();

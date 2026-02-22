@@ -17,35 +17,35 @@ static void powerOff() {
 }
 
 static void imageCurrent() {
-  if (!lvgl_menu_state() && currentState == MAIN_NORMAL) {
+  if (currentState == MAIN_NORMAL) {
     TaskHandle_t display_task_handle = xTaskGetHandle("display_task");
     xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_FILE, eSetValueWithOverwrite);
   }
 }
 
 static void imageNext() {
-  if (!lvgl_menu_state() && currentState == MAIN_NORMAL) {
+  if (currentState == MAIN_NORMAL) {
     TaskHandle_t display_task_handle = xTaskGetHandle("display_task");
     xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_NEXT, eSetValueWithOverwrite);
   }
 }
 
 static void imagePrevious() {
-  if (!lvgl_menu_state() && currentState == MAIN_NORMAL) {
+  if (currentState == MAIN_NORMAL) {
     TaskHandle_t display_task_handle = xTaskGetHandle("display_task");
     xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_PREVIOUS, eSetValueWithOverwrite);
   }
 }
 
 static void imageSpecial1() {
-  if (!lvgl_menu_state() && currentState == MAIN_NORMAL) {
+  if (currentState == MAIN_NORMAL) {
     TaskHandle_t display_task_handle = xTaskGetHandle("display_task");
     xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_SPECIAL_1, eSetValueWithOverwrite);
   }
 }
 
 static void imageSpecial2() {
-  if (!lvgl_menu_state() && currentState == MAIN_NORMAL) {
+  if (currentState == MAIN_NORMAL) {
     TaskHandle_t display_task_handle = xTaskGetHandle("display_task");
     xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_SPECIAL_2, eSetValueWithOverwrite);
   }
@@ -68,7 +68,7 @@ static long long lastKeyPress;
 static esp_timer_handle_t inputTimer = nullptr;
 
 static void openMenu() {
-  if (!lvgl_menu_state() && currentState == MAIN_NORMAL) {
+  if (currentState == MAIN_NORMAL) {
     esp_timer_stop(inputTimer);
     lvgl_menu_open();
   }
@@ -125,7 +125,7 @@ void initInputTimer(Boards::Board *board) {
   };
 
   ESP_ERROR_CHECK(esp_timer_create(&inputTimerArgs, &inputTimer));
-  ESP_ERROR_CHECK(esp_timer_start_periodic(inputTimer, 10 * 1000));
+  ESP_ERROR_CHECK(esp_timer_start_periodic(inputTimer, 1 * 1000));
 }
 #else
 #include "portable_time.h"
@@ -134,7 +134,7 @@ void initInputTimer(Boards::Board *board) {
 TimerHandle_t inputTimer;
 
 static void openMenu() {
-  if (!lvgl_menu_state() && currentState == MAIN_NORMAL) {
+  if (currentState == MAIN_NORMAL) {
     xTimerStop(inputTimer, portMAX_DELAY);
     lvgl_menu_open();
   }
@@ -147,7 +147,6 @@ void startInputTimer() {
 static void inputTimerHandler(TimerHandle_t) {
   auto board = get_board();
   if (currentState == MAIN_NORMAL) {
-    if (!lvgl_menu_state()) {
       hal::keys::EVENT_STATE *key_state = board->GetKeys()->read();
 
       switch (inputState) {
@@ -197,7 +196,6 @@ static void inputTimerHandler(TimerHandle_t) {
 //          LOGI(TAG, "x: %d y: %d", e.first, e.second);
 //        }
 //      }
-    }
   }
 }
 
