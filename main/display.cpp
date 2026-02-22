@@ -426,6 +426,7 @@ static void next_prev(std::unique_ptr<image::Image> &in, char *current_file, hal
     return;
   }
   const char *next = directory_get_increment(&dir, file_position, increment);
+  LOGI(TAG, "Next %s", next);
   if (next != nullptr) {
     strcpy(basename(current_file), next);
     in.reset(); //Free the memory before trying to open the next image
@@ -503,7 +504,7 @@ void display_task(void *params) {
       }
       switch (option) {
         case DISPLAY_FILE:
-          LOGI(TAG, "DISPLAY_FILE");
+          LOGD(TAG, "DISPLAY_FILE");
           if (!valid_image_file(current_file, extensions)) {
             config->getPath(current_file);
           }
@@ -512,10 +513,12 @@ void display_task(void *params) {
           last_mode = static_cast<DISPLAY_OPTIONS>(option);
           break;
         case DISPLAY_NEXT:
+          LOGD(TAG, "DISPLAY_NEXT");
           next_prev(in, current_file, config, display, 1);
           slideShowRestart();
           break;
         case DISPLAY_PREVIOUS:
+          LOGD(TAG, "DISPLAY_PREVIOUS");
           next_prev(in, current_file, config, display, -1);
           slideShowRestart();
           break;
@@ -537,7 +540,7 @@ void display_task(void *params) {
           file_position = -1;
           break;
         case DISPLAY_SPECIAL_1:
-          LOGI(TAG, "DISPLAY_SPECIAL_1");
+          LOGD(TAG, "DISPLAY_SPECIAL_1");
           get_board()->GetConfig()->getCard(hal::config::cards::UP, card_path);
           if (is_file(card_path)) {
             in.reset(openFile(card_path, display));
@@ -546,7 +549,7 @@ void display_task(void *params) {
           }
           break;
         case DISPLAY_SPECIAL_2:
-          LOGI(TAG, "DISPLAY_SPECIAL_2");
+          LOGD(TAG, "DISPLAY_SPECIAL_2");
           get_board()->GetConfig()->getCard(hal::config::cards::DOWN, card_path);
           if (is_file(card_path)) {
             in.reset(openFile(card_path, display));
@@ -592,6 +595,7 @@ void display_task(void *params) {
     }
 
     if (advance && endOfFrame) {
+      LOGD(TAG, "advance");
       next_prev(in, current_file, config, display, 1);
       advance = false;
       endOfFrame = false;
