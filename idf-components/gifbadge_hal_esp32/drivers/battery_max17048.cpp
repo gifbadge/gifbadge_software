@@ -25,8 +25,11 @@ hal::battery::esp32s3::battery_max17048::battery_max17048(i2c_master_bus_handle_
   ESP_ERROR_CHECK(i2c_master_bus_add_device(i2c, &dev_cfg, &i2c_handle));
   uint8_t data_in[2];
   uint8_t data_out = 0x08;
-  ESP_ERROR_CHECK(i2c_master_transmit_receive(i2c_handle, &data_out, 1 ,data_in, 2, 100));
-  LOGI(TAG, "MAX17048 Version %u %u", data_in[0], data_in[1]);
+  if (i2c_master_transmit_receive(i2c_handle, &data_out, 1 ,data_in, 2, 100) == ESP_OK) {
+    LOGI(TAG, "MAX17048 Version %u %u", data_in[0], data_in[1]);
+  } else {
+    LOGI(TAG, "MAX17048 communication error", data_in[0], data_in[1]);
+  }
   const esp_timer_create_args_t battery_timer_args = {
       .callback = [](void *params) {
         auto bat = static_cast<battery_max17048 *>(params);
@@ -46,13 +49,13 @@ hal::battery::esp32s3::battery_max17048::battery_max17048(i2c_master_bus_handle_
 void hal::battery::esp32s3::battery_max17048::poll() {
   uint8_t data_in[2];
   uint8_t data_out = 0x02;
-  ESP_ERROR_CHECK(i2c_master_transmit_receive(i2c_handle, &data_out, 1 ,data_in, 2, 100));
+  i2c_master_transmit_receive(i2c_handle, &data_out, 1 ,data_in, 2, 100);
   _voltage = ((static_cast<uint16_t>(data_in[0] << 8) | data_in[1]) * 78.125) / 1000000;
   data_out = 0x04;
-  ESP_ERROR_CHECK(i2c_master_transmit_receive(i2c_handle, &data_out, 1 ,data_in, 2, 100));
+  i2c_master_transmit_receive(i2c_handle, &data_out, 1 ,data_in, 2, 100);
   _soc = static_cast<int>((static_cast<uint16_t>(data_in[0] << 8) | data_in[1]) / 256.00);
   data_out = 0x16;
-  ESP_ERROR_CHECK(i2c_master_transmit_receive(i2c_handle, &data_out, 1 ,data_in, 2, 100));
+  i2c_master_transmit_receive(i2c_handle, &data_out, 1 ,data_in, 2, 100);
   _rate = (static_cast<int16_t>(data_in[0] << 8) | data_in[1]) * 0.208;
 }
 
@@ -72,7 +75,7 @@ void hal::battery::esp32s3::battery_max17048::BatteryInserted() {
   // Quickstart. so the MAX17048 restarts it's SOC algorythm.
   //Prevents erroneous readings if battery is swapped while charging
   uint8_t cmd[] = {0x06, 0x80, 0x00};
-  ESP_ERROR_CHECK(i2c_master_transmit(i2c_handle, cmd, sizeof(cmd) , 100));
+  i2c_master_transmit(i2c_handle, cmd, sizeof(cmd) , 100);
   present = true;
 }
 
