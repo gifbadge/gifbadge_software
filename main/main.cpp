@@ -48,9 +48,19 @@ void dumpDebugFunc(TimerHandle_t) {
   args->PmLock();
   args->DebugInfo();
 #ifdef CONFIG_FREERTOS_GENERATE_RUN_TIME_STATS
-  unsigned int count = uxTaskGetSystemState(tasks, 20, nullptr);
+  unsigned long ulTotalRunTime;
+  unsigned int count = uxTaskGetSystemState(tasks, 20, &ulTotalRunTime);
+  // ulTotalRunTime /= 100UL;
+  float runtime = ulTotalRunTime / 100.0f;
   for (unsigned int i = 0; i < count; i++) {
-    LOGI(TAG, "%s State: %s, Highwater: %lu, Runtime: %lu", tasks[i].pcTaskName, taskState(tasks[i].eCurrentState), tasks[i].usStackHighWaterMark, tasks[i].ulRunTimeCounter);
+    LOGI(TAG,
+
+      "%s State: %s, Highwater: %lu, Runtime: %0.2f",
+      tasks[i].pcTaskName,
+      taskState(tasks[i].eCurrentState),
+      tasks[i].usStackHighWaterMark,
+      tasks[i].ulRunTimeCounter > 0?static_cast<float>(tasks[i].ulRunTimeCounter)/runtime:0.0f
+      );
   }
 #endif
   args->PmRelease();
