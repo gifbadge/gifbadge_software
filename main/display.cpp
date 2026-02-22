@@ -483,7 +483,7 @@ void display_task(void *params) {
   int32_t delay = 1000/portTICK_PERIOD_MS; //Delay for display loop. Is adjusted by the results of the loop method of the image being displayed
   bool redraw = false; //Reload from configuration next time we go to display an image
   bool advance = false; //Advance the slideshow
-  bool endOfFrame = false; //Last frame of animation
+  image::frameStatus endOfFrame = image::frameStatus::ERROR; //Last frame of animation
   std::unique_ptr<image::Image> in = nullptr; //The image we are displaying
   char current_file[MAX_FILE_LEN + 1]; //The current file path that has been selected
   config->getPath(current_file);
@@ -587,21 +587,20 @@ void display_task(void *params) {
       slideShowStart(config);
       redraw = false;
       advance = false;
-      endOfFrame = false;
+      endOfFrame = image::frameStatus::OK;
     }
 
-    if (advance && endOfFrame) {
+    if (advance && endOfFrame == image::frameStatus::END) {
       LOGD(TAG, "advance");
       next_prev(in, current_file, config, display, 1);
       advance = false;
-      endOfFrame = false;
+      endOfFrame = image::frameStatus::OK;
     }
 
     if (in) {
       // If there is an open file, display the next frame
-      image::frameReturn status = displayFile(in, display);
-      delay = status.second;
-      if (status.first == image::frameStatus::ERROR) {
+      std::tie(endOfFrame, delay) = displayFile(in, display);
+      if (endOfFrame == image::frameStatus::ERROR) {
         if (config->getSlideShow()) {
           //Skip the error, and head to the next file in slideshow mode
           next_prev(in, current_file, config, display, 1);
@@ -612,7 +611,6 @@ void display_task(void *params) {
                                                  current_file,
                                                  in->GetLastError());
       }
-      endOfFrame = status.first == image::frameStatus::END;
     }
   }
 }
