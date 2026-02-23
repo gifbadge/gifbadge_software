@@ -49,7 +49,7 @@ esp32::s3::full::v0_6::v0_6() {
 
   //Enable Battery charging
   _pmic->ChargeDisable();
-  _pmic->ChargeCurrentSet(800);
+  _pmic->ChargeCurrentSet(400);
   _pmic->ChargeVtermSet(4200);
   _pmic->ChargeEnable();
 
@@ -111,7 +111,7 @@ BoardPower esp32::s3::full::v0_6::PowerState() {
     return BOARD_POWER_NORMAL;
   }
   if (_pmic->BatterySoc() < 12) {
-    if (_pmic->BatterySoc() < 10) {
+    if (_pmic->BatterySoc() < 5) {
       return BOARD_POWER_CRITICAL;
     }
     return BOARD_POWER_LOW;
