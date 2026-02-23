@@ -27,32 +27,31 @@ static void npmx_timer(void *arg) {
 
 npmx_error_t npmx_write(void *p_context, uint32_t register_address, uint8_t *p_data, size_t num_of_bytes) {
   auto i2c = static_cast<i2c_master_dev_handle_t>(p_context);
-//  LOGI(TAG, "npm1300 i2c write %lx bytes %u", register_address, num_of_bytes);
-//  for (int i = 0; i < num_of_bytes; i++) {
-//    LOGI(TAG, "%x", p_data[i]);
-//  }
   auto *to_write = static_cast<uint8_t *>(malloc(num_of_bytes + 2));
   assert(to_write != nullptr);
   to_write[0] = (static_cast<uint16_t>(register_address) >> 8);
   to_write[1] = (static_cast<uint16_t>(register_address) &0x00FF);
   memcpy(&to_write[2], p_data, num_of_bytes);
-  i2c_master_transmit(i2c, to_write, num_of_bytes + 2, 100);
+  esp_err_t ret = i2c_master_transmit(i2c, to_write, num_of_bytes + 2, 100);
   free(to_write);
-
-  return NPMX_SUCCESS;
+  if (ret == ESP_OK) {
+    return NPMX_SUCCESS;
+  }
+  LOGE(TAG, "npmx_write failed: 0x%x", ret);
+  return NPMX_ERROR_IO;
 }
 
 npmx_error_t npmx_read(void *p_context, uint32_t register_address, uint8_t *p_data, size_t num_of_bytes) {
   auto i2c = static_cast<i2c_master_dev_handle_t>(p_context);
-//  LOGI(TAG, "npm1300 i2c read %lx bytes %u", register_address, num_of_bytes);
   uint8_t reg8[2];
   reg8[0] = (static_cast<uint16_t>(register_address) >> 8)&0xFF;
   reg8[1] = (static_cast<uint16_t>(register_address) &0xFF);
-  i2c_master_transmit_receive(i2c, reg8, 2, p_data, num_of_bytes, 100);
-//  for (int i = 0; i < num_of_bytes; i++) {
-//    LOGI(TAG, "%x", p_data[i]);
-//  }
-  return NPMX_SUCCESS;
+  esp_err_t ret = i2c_master_transmit_receive(i2c, reg8, 2, p_data, num_of_bytes, 100);
+  if (ret == ESP_OK) {
+    return NPMX_SUCCESS;
+  }
+  LOGE(TAG, "npmx_read failed: 0x%x", ret);
+  return NPMX_ERROR_IO;
 }
 
 void hal::pmic::esp32s3::PmicNpm1300::VbusVoltage(npmx_instance_t *pm, npmx_callback_type_t, uint8_t mask) {
@@ -451,7 +450,7 @@ void hal::pmic::esp32s3::PmicNpm1300::VbusMaxCurrentSet(uint16_t mA) {
 bool hal::pmic::esp32s3::PmicNpm1300::VbusConnected() {
   uint8_t vbus_status;
   npmx_vbusin_vbus_status_get(npmx_vbusin_get(&_npmx_instance, 0), &vbus_status);
-  return vbus_status&NPMX_VBUSIN_STATUS_CONNECTED_MASK;
+  return (vbus_status&NPMX_VBUSIN_STATUS_CONNECTED_MASK)==1;
 }
 
 void hal::pmic::esp32s3::PmicNpm1300::EnableADC() {
@@ -542,6 +541,7 @@ void  hal::pmic::esp32s3::PmicNpm1300::DebugLog() {
       LOGI(TAG, "Error");
       break;
   }
+  LOGI(TAG, "Vbus: %s", VbusConnected()?"True":"False");
 }
 
 
