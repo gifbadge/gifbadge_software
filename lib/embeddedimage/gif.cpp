@@ -12,16 +12,11 @@
 #include <sys/stat.h>
 #include <cstring>
 
-#define PICO_BUILD
 #include <AnimatedGIF.h>
-// #define ALLOWS_UNALIGNED
 #include <gif.inl>
 #include <filebuffer.h>
 
 char open_path[255] = "";
-
-static void * prev_buffer = nullptr;
-
 
 static void *OpenFile(const char *fname, int32_t *pSize) {
   strcpy(open_path, fname);
@@ -124,7 +119,6 @@ image::frameReturn image::GIF::GetFrame(uint8_t *outBuf, int16_t x, int16_t y, i
     }
   }
 
-  prev_buffer = outBuf;
   if (_gif.GIFFile.iPos < _gif.GIFFile.iSize - 10 == false) {
     return {frameStatus::END, frameDelay};
   }
