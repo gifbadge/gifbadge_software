@@ -22,8 +22,8 @@
 
 #define MAX_FILE_LEN 128
 
-#define BUFFER_CHUNK (256)
-#define BUFFER_KEEP_SIZE (BUFFER_CHUNK*8)
+#define BUFFER_CHUNK (512)
+#define BUFFER_KEEP_SIZE (BUFFER_CHUNK*4)
 
 static TaskHandle_t file_buffer_task = nullptr;
 static TaskHandle_t wakeup_task = nullptr;
@@ -223,7 +223,7 @@ void FileBufferTask(void *params) {
 
 bool filebuffer_open(const char *path) {
   xTaskNotifyIndexed(file_buffer_task, 0, FILEBUFFER_PAUSE, eSetValueWithOverwrite);
-  if (wait_for_task(10/portTICK_PERIOD_MS) != pdTRUE) {
+  if (wait_for_task(100/portTICK_PERIOD_MS) != pdTRUE) {
     debug_print("Timeout during file open\n");
     return false;
   }
@@ -234,7 +234,7 @@ bool filebuffer_open(const char *path) {
 
 void filebuffer_close() {
   xTaskNotifyIndexed(file_buffer_task, 0, FILEBUFFER_CLOSE, eSetValueWithOverwrite);
-  if (wait_for_task(10/portTICK_PERIOD_MS) != pdTRUE) {
+  if (wait_for_task(100/portTICK_PERIOD_MS) != pdTRUE) {
     debug_print("Timeout during file close\n");
   }
 }
@@ -243,7 +243,7 @@ int32_t filebuffer_read(uint8_t *pBuf, const int32_t iLen) {
   size_t available;
   while (available = cbuffer_get_avail(&cbuffer), available < iLen) {
   xTaskNotifyIndexed(file_buffer_task, 0, 0, eNoAction);
-    if (wait_for_task(10/portTICK_PERIOD_MS) != pdTRUE) {
+    if (wait_for_task(100/portTICK_PERIOD_MS) != pdTRUE) {
       debug_print("Timeout while reading file\n");
       return 0;
     }
@@ -255,7 +255,7 @@ int32_t filebuffer_read(uint8_t *pBuf, const int32_t iLen) {
 
 void filebuffer_seek(int32_t pos) {
   xTaskNotifyIndexed(file_buffer_task, 0, FILEBUFFER_PAUSE, eSetValueWithOverwrite);
-  if (wait_for_task(10/portTICK_PERIOD_MS) != pdTRUE) {
+  if (wait_for_task(100/portTICK_PERIOD_MS) != pdTRUE) {
     debug_print("Timeout during file seek\n");
     return;
   }
