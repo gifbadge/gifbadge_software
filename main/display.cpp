@@ -493,92 +493,92 @@ void display_task(void *params) {
     option = 0;
     if (xTaskNotifyWaitIndexed(0, 0, 0xffffffff, &option, delay == -1 ? portMAX_DELAY : delay)) {
       LOGD(TAG, "Woken up id: %d, Reset: %s", option & ~noResetBit, !(option & noResetBit)?"True":"False");
-    if (option != DISPLAY_NONE) {
-      config->reload();
-      if (!(option & noResetBit)) {
-        in.reset();
-      }
-      switch (option) {
-        case DISPLAY_FILE:
-          LOGD(TAG, "DISPLAY_FILE");
-          if (!valid_image_file(current_file, extensions)) {
-            config->getPath(current_file);
-          }
-          in.reset(openFileUpdatePath(current_file, display));
-          slideShowStart(config);
-          last_mode = static_cast<DISPLAY_OPTIONS>(option);
-          break;
-        case DISPLAY_NEXT:
-          LOGD(TAG, "DISPLAY_NEXT");
-          next_prev(in, current_file, config, display, 1);
-          slideShowRestart();
-          break;
-        case DISPLAY_PREVIOUS:
-          LOGD(TAG, "DISPLAY_PREVIOUS");
-          next_prev(in, current_file, config, display, -1);
-          slideShowRestart();
-          break;
-        case DISPLAY_BATT:
-          if (last_mode != DISPLAY_BATT) {
-            in.reset(display_image_batt());
-          }
-          file_position = -1;
-          last_mode = static_cast<DISPLAY_OPTIONS>(option);
-          break;
-        case DISPLAY_OTA:
-          in = std::make_unique<image::OTAImage>(display->size);
-          file_position = -1;
-          last_mode = static_cast<DISPLAY_OPTIONS>(option);
-          break;
-        case DISPLAY_NO_STORAGE:
-          last_mode = static_cast<DISPLAY_OPTIONS>(option);
-          in = std::make_unique<image::NoStorageImage>(display->size);
-          file_position = -1;
-          break;
-        case DISPLAY_SPECIAL_1:
-          LOGD(TAG, "DISPLAY_SPECIAL_1");
-          get_board()->GetConfig()->getCard(hal::config::cards::UP, card_path);
-          if (is_file(card_path)) {
-            in.reset(openFile(card_path, display));
-            last_mode = static_cast<DISPLAY_OPTIONS>(option);
-            slideShowStop();
-          }
-          break;
-        case DISPLAY_SPECIAL_2:
-          LOGD(TAG, "DISPLAY_SPECIAL_2");
-          get_board()->GetConfig()->getCard(hal::config::cards::DOWN, card_path);
-          if (is_file(card_path)) {
-            in.reset(openFile(card_path, display));
-            last_mode = static_cast<DISPLAY_OPTIONS>(option);
-            slideShowStop();
-          }
-          break;
-        case DISPLAY_NOTIFY_CHANGE:
-          redraw = true;
-          // Something has changed in the configuration, reopen the configured file.
-          config->getPath(current_file);
-          delay = -1;
-          continue;
-        case DISPLAY_NOTIFY_USB:
-          closedir_sorted(&dir);
-          dir.dirptr = nullptr;
-          break;
-        case DISPLAY_ADVANCE:
-          advance = true;
-          break;
-        case DISPLAY_STOP:
-          xTimerDelete(slideShowTimer, 0);
+      if (option != DISPLAY_NONE) {
+        config->reload();
+        if (!(option & noResetBit)) {
           in.reset();
-          vTaskDelete(nullptr);
-          return;
-        case DISPLAY_MENU:
-          delay = -1;
-          LOGD("TAG", "Display menu");
-          continue;
-        default:
-          break;
+        }
+        switch (option) {
+          case DISPLAY_FILE:
+            LOGD(TAG, "DISPLAY_FILE");
+            if (!valid_image_file(current_file, extensions)) {
+              config->getPath(current_file);
+            }
+            in.reset(openFileUpdatePath(current_file, display));
+            slideShowStart(config);
+            last_mode = static_cast<DISPLAY_OPTIONS>(option);
+            break;
+          case DISPLAY_NEXT:
+            LOGD(TAG, "DISPLAY_NEXT");
+            next_prev(in, current_file, config, display, 1);
+            slideShowRestart();
+            break;
+          case DISPLAY_PREVIOUS:
+            LOGD(TAG, "DISPLAY_PREVIOUS");
+            next_prev(in, current_file, config, display, -1);
+            slideShowRestart();
+            break;
+          case DISPLAY_BATT:
+            if (last_mode != DISPLAY_BATT) {
+              in.reset(display_image_batt());
+            }
+            file_position = -1;
+            last_mode = static_cast<DISPLAY_OPTIONS>(option);
+            break;
+          case DISPLAY_OTA:
+            in = std::make_unique<image::OTAImage>(display->size);
+            file_position = -1;
+            last_mode = static_cast<DISPLAY_OPTIONS>(option);
+            break;
+          case DISPLAY_NO_STORAGE:
+            last_mode = static_cast<DISPLAY_OPTIONS>(option);
+            in = std::make_unique<image::NoStorageImage>(display->size);
+            file_position = -1;
+            break;
+          case DISPLAY_SPECIAL_1:
+            LOGD(TAG, "DISPLAY_SPECIAL_1");
+            get_board()->GetConfig()->getCard(hal::config::cards::UP, card_path);
+            if (is_file(card_path)) {
+              in.reset(openFile(card_path, display));
+              last_mode = static_cast<DISPLAY_OPTIONS>(option);
+              slideShowStop();
+            }
+            break;
+          case DISPLAY_SPECIAL_2:
+            LOGD(TAG, "DISPLAY_SPECIAL_2");
+            get_board()->GetConfig()->getCard(hal::config::cards::DOWN, card_path);
+            if (is_file(card_path)) {
+              in.reset(openFile(card_path, display));
+              last_mode = static_cast<DISPLAY_OPTIONS>(option);
+              slideShowStop();
+            }
+            break;
+          case DISPLAY_NOTIFY_CHANGE:
+            redraw = true;
+            // Something has changed in the configuration, reopen the configured file.
+            config->getPath(current_file);
+            delay = -1;
+            continue;
+          case DISPLAY_NOTIFY_USB:
+            closedir_sorted(&dir);
+            dir.dirptr = nullptr;
+            break;
+          case DISPLAY_ADVANCE:
+            advance = true;
+            break;
+          case DISPLAY_STOP:
+            xTimerDelete(slideShowTimer, 0);
+            in.reset();
+            vTaskDelete(nullptr);
+            return;
+          case DISPLAY_MENU:
+            delay = -1;
+            LOGD("TAG", "Display menu");
+            continue;
+          default:
+            break;
+        }
       }
-    }
     }
 
     if (redraw) {
