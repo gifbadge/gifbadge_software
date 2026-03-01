@@ -4,7 +4,7 @@ project(EmbeddedImage VERSION 1.0 LANGUAGES C CXX ASM)
 file(GLOB PNGdec_src ${CMAKE_SOURCE_DIR}/external-deps/PNGdec/src/*.c ${CMAKE_SOURCE_DIR}/external-deps/PNGdec/src/*.cpp)
 file(GLOB JPEGDEC_src ${CMAKE_SOURCE_DIR}/external-deps/JPEGDEC/src/*.c ${CMAKE_SOURCE_DIR}/external-deps/JPEGDEC/src/*.cpp ${CMAKE_SOURCE_DIR}/external-deps/JPEGDEC/src/*.S)
 
-set(ESP_COMPILE_OPTIONS -ffunction-sections -fdata-sections -O2 -Wwrite-strings -fno-jump-tables -fno-tree-switch-conversion -fstrict-volatile-bitfields -mdisable-hardware-atomics -gdwarf-4 -ggdb $<$<COMPILE_LANGUAGE:CXX>:-fno-exceptions -fno-rtti -fuse-cxa-atexit>)
+set(ESP_COMPILE_OPTIONS -DNDEBUG -ffunction-sections -fdata-sections -O2 -Wwrite-strings $<$<COMPILE_LANGUAGE:CXX>:-fno-exceptions -fno-rtti -fuse-cxa-atexit>)
 
 add_library(PNGdec ${PNGdec_src})
 target_include_directories(PNGdec PUBLIC "${CMAKE_SOURCE_DIR}/external-deps/PNGdec/src")
