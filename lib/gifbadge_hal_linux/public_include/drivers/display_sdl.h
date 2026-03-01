@@ -36,6 +36,8 @@ class display_sdl : public hal::display::Display {
 
   sem_t mutex{};
   flushCallback_t _callback = nullptr;
+  uint8_t *_buffer1 = nullptr;
+  uint8_t *_buffer2 = nullptr;
 };
 
 

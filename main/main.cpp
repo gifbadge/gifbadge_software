@@ -68,7 +68,7 @@ void dumpDebugFunc(TimerHandle_t) {
 }
 
 static void dumpDebugTimerInit() {
-  xTimerStart(xTimerCreate("dumpDebugTimer", 10000/portTICK_PERIOD_MS, pdTRUE, nullptr, dumpDebugFunc), 0);
+  // xTimerStart(xTimerCreate("dumpDebugTimer", 10000/portTICK_PERIOD_MS, pdTRUE, nullptr, dumpDebugFunc), 0);
 }
 
 MAIN_STATES currentState = MAIN_NONE;
@@ -180,7 +180,7 @@ extern "C" [[noreturn]] void app_main(void) {
 
   initInputTimer(board);
 
-  vTaskDelay(500 / portTICK_PERIOD_MS); //Let USB Settle
+  // vTaskDelay(500 / portTICK_PERIOD_MS); //Let USB Settle
 
   if (!board->StorageReady()) {
     xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_NO_STORAGE, eSetValueWithOverwrite);
@@ -398,7 +398,7 @@ extern "C" int main(void) {
   console_print("test\n");
   signal( SIGINT, handle_sigint );
   signal( SIGTERM, handle_sigint );
-  auto display = display_sdl_init({240, 240});
+  auto display = display_sdl_init({480, 480});
   auto keys = keys_sdl_init();
   auto touch = touch_sdl_init();
   xTaskCreate(reinterpret_cast<void (*)(void *)>(app_main), "app_main", 10000, nullptr, 1, nullptr);
@@ -426,7 +426,7 @@ extern "C" int main(void) {
         touch->update(event);
       }
     }
-    usleep(30*1000);
+    usleep(10*1000);
   }
   schedular.join();
   return 0;

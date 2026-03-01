@@ -17,7 +17,10 @@ hal::display::oslinux::display_sdl *displaySdl = nullptr;
 hal::display::oslinux::display_sdl::display_sdl(const std::pair<uint16_t, uint16_t> &_size) {
   sem_init(&mutex, 0, 0);
   size = _size;
-  buffer = static_cast<uint8_t *>(malloc(size.first*size.second*2));
+  _buffer1 = static_cast<uint8_t *>(malloc(size.first*size.second*2));
+  _buffer2 = static_cast<uint8_t *>(malloc(size.first*size.second*2));
+
+  buffer = _buffer1;
   if (!SDL_Init(SDL_INIT_VIDEO|SDL_INIT_EVENTS)) {
     LOGI("hal::display::oslinux::display_sdl", "error initializing SDL: %s\n", SDL_GetError());
   }
@@ -55,9 +58,10 @@ bool hal::display::oslinux::display_sdl::onColorTransDone(flushCallback_t callba
   return false;
 }
 void hal::display::oslinux::display_sdl::write(int x_start, int y_start, int x_end, int y_end, void *color_data) {
-  if (color_data != buffer) {
-    memcpy(buffer, color_data, size.first*size.second*2);
-  }
+  buffer = static_cast<uint8_t *>(buffer == _buffer1 ? _buffer2 : _buffer1);
+  // if (color_data != buffer) {
+  //   memcpy(buffer, color_data, size.first*size.second*2);
+  // }
   sem_post(&mutex);
 }
 void hal::display::oslinux::display_sdl::update() {
@@ -72,7 +76,7 @@ void hal::display::oslinux::display_sdl::update() {
 
     // copy to window
     SDL_RenderTexture(renderer, pixels, nullptr, nullptr);
-    SDL_RenderTexture(renderer, mask, nullptr, nullptr);
+    // SDL_RenderTexture(renderer, mask, nullptr, nullptr);
     SDL_RenderPresent(renderer);
     if (_callback) {
       _callback();
