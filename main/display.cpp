@@ -161,6 +161,7 @@ int max_frame_delay = 0;
 int frame_count = 0;
 float last_fps = 0;
 bool looped = false;
+int64_t image_start = 0;
 
 static image::frameReturn displayFile(std::unique_ptr<image::Image> &in, hal::display::Display *display) {
   int64_t start = millis();
@@ -177,11 +178,10 @@ static image::frameReturn displayFile(std::unique_ptr<image::Image> &in, hal::di
   }
   status = in->GetFrame(display->buffer, xOffset, yOffset, display->size.first);
   if (status.first == image::frameStatus::ERROR) {
-    LOGI(TAG, "Image loop error");
+    LOGI(TAG, "Image loop error. Frame %d", frame_count);
     return {image::frameStatus::ERROR, 0};
-  } else {
-    display->write(0, 0, display->size.first, display->size.second, display->buffer);
   }
+  display->write(0, 0, display->size.first, display->size.second, display->buffer);
   int frameTime = static_cast<int>(millis() - start);
   int calc_delay = static_cast<int>(status.second) - frameTime;
   // LOGI(TAG, "Frame Delay: %lu, calculated delay %i", status.second, calc_delay);
@@ -197,6 +197,7 @@ static image::frameReturn displayFile(std::unique_ptr<image::Image> &in, hal::di
       if (looped) {
         last_fps = 1000.00f/(static_cast<float>(average_frame_time)/static_cast<float>(frame_count));
         LOGI(TAG, "Average FPS: %f", last_fps);
+        LOGI(TAG, "FPS: %f", 1000.00f/(static_cast<float>(millis()-image_start)/static_cast<float>(frame_count)));
       }
       LOGI(TAG, "Average Frame Delay: %s, Max Delay: %li", lltoa(average_frame_delay/frame_count, 10), max_frame_delay);
       frame_count = 0;
@@ -204,10 +205,12 @@ static image::frameReturn displayFile(std::unique_ptr<image::Image> &in, hal::di
       average_frame_delay = 0;
       max_frame_delay = 0;
       looped = true;
+      image_start = millis();
     }
     return {status.first, (calc_delay > 0 ? calc_delay : 0)/portTICK_PERIOD_MS};
   }
   else{
+    LOGI(TAG, "Frame Time: %s", lltoa(millis()-start, 10), max_frame_delay);
     return {image::frameStatus::END, portMAX_DELAY};
   }
 }
@@ -410,6 +413,7 @@ static image::Image *openFile(const char *path, hal::display::Display *display) 
   max_frame_delay = 0;
   last_fps = 0;
   looped = false;
+  image_start = millis();
   return in;
 }
 
