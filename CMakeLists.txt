@@ -1,7 +1,3 @@
-# For more information about build system see
-# https://docs.espressif.com/projects/esp-idf/en/latest/api-guides/build-system.html
-# The following five lines of boilerplate have to be in your project's
-# CMakeLists in this exact order for cmake to work correctly
 cmake_minimum_required(VERSION 3.24)
 
 if (ESP_PLATFORM)
@@ -80,9 +76,6 @@ if (ESP_PLATFORM)
         message(LV_CONF_PATH=${CMAKE_SOURCE_DIR}/config/esp32s3/lv_conf.h)
         idf_build_set_property(COMPILE_OPTIONS "-I${CMAKE_SOURCE_DIR}/config/esp32s3" APPEND)
     endif ()
-#    idf_build_set_property()
-#    target_compile_options(mbedcrypto PRIVATE "-Wno-maybe-uninitialized")
-#    target_compile_options(mbedtls PRIVATE "-DMBEDTLS_ECP_LIGHT=1")
 else()
     add_compile_options( -D__linux__)
 
