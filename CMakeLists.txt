@@ -45,7 +45,7 @@ if(NOT ESP_PLATFORM)
 
     target_include_directories( freertos_config
             INTERFACE
-            ${CMAKE_CURRENT_LIST_DIR})
+            "${CMAKE_SOURCE_DIR}/config/linux/")
 
     # Select the heap port
     set( FREERTOS_HEAP "3" CACHE STRING "" FORCE)
@@ -53,7 +53,7 @@ if(NOT ESP_PLATFORM)
     # Select the native compile PORT
     set( FREERTOS_PORT "GCC_POSIX" CACHE STRING "" FORCE)
 
-    set(FREERTOS_CONFIG_FILE_DIRECTORY "${CMAKE_SOURCE_DIR}/" CACHE STRING "")
+    set(FREERTOS_CONFIG_FILE_DIRECTORY "${CMAKE_SOURCE_DIR}/config/linux/" CACHE STRING "")
     # Adding the FreeRTOS-Kernel subdirectory
     add_subdirectory(external-deps/FreeRTOS-Kernel)
 
@@ -91,16 +91,10 @@ else()
 
     add_subdirectory(main)
     add_subdirectory(lib/gifbadge_hal_linux)
-    set(LV_CONF_PATH
-            "${CMAKE_SOURCE_DIR}/main/include/lv_conf_linux.h"
-            CACHE STRING "" FORCE)
-    set(LV_BUILD_CONF_PATH
-            "${CMAKE_SOURCE_DIR}/main/include/lv_conf_linux.h"
-            CACHE STRING "" FORCE)
-    message(LV_CONF_PATH=${CMAKE_SOURCE_DIR}/main/include/lv_conf_linux.h)
+
+    message(LV_CONF_PATH="${CMAKE_SOURCE_DIR}/config/linux/lv_conf.h")
     add_subdirectory(external-deps/lvgl)
-#    target_compile_options(lvgl PUBLIC -DLV_CONF_PATH=\"${CMAKE_SOURCE_DIR}/main/include/lv_conf_linux.h\")
-    target_compile_options(lvgl PUBLIC -DLV_CONF_PATH=${CMAKE_SOURCE_DIR}/main/include/lv_conf_linux.h)
+    target_compile_options(lvgl PUBLIC -I${CMAKE_SOURCE_DIR}/config/linux/)
 
     target_link_libraries(GifBadge gifbadge_hal gifbadge_hal_linux freertos_kernel EmbeddedImage FileUtil FontRender FileBuffer lvgl ${SDL3_LIBRARIES})
     set_property(TARGET GifBadge PROPERTY CXX_STANDARD 23)
