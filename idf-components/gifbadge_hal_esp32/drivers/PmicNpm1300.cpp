@@ -25,15 +25,19 @@ static void npmx_timer(void *arg) {
   pmic->Loop();
 }
 
+uint8_t npmx_write_buffer[64];
+
 npmx_error_t npmx_write(void *p_context, uint32_t register_address, uint8_t *p_data, size_t num_of_bytes) {
   auto i2c = static_cast<i2c_master_dev_handle_t>(p_context);
-  auto *to_write = static_cast<uint8_t *>(malloc(num_of_bytes + 2));
-  assert(to_write != nullptr);
-  to_write[0] = (static_cast<uint16_t>(register_address) >> 8);
-  to_write[1] = (static_cast<uint16_t>(register_address) &0x00FF);
-  memcpy(&to_write[2], p_data, num_of_bytes);
-  esp_err_t ret = i2c_master_transmit(i2c, to_write, num_of_bytes + 2, 100);
-  free(to_write);
+  memset(npmx_write_buffer, 0, sizeof(npmx_write_buffer));
+  if (num_of_bytes+2 > sizeof(npmx_write_buffer)) {
+    LOGE(TAG, "npmx_write failed, buffer too small");
+    return NPMX_ERROR_IO;
+  }
+  npmx_write_buffer[0] = (static_cast<uint16_t>(register_address) >> 8);
+  npmx_write_buffer[1] = (static_cast<uint16_t>(register_address) &0x00FF);
+  memcpy(&npmx_write_buffer[2], p_data, num_of_bytes);
+  esp_err_t ret = i2c_master_transmit(i2c, npmx_write_buffer, num_of_bytes + 2, 100);
   if (ret == ESP_OK) {
     return NPMX_SUCCESS;
   }
