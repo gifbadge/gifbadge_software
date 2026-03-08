@@ -128,7 +128,7 @@ static void usbCall(tinyusb_msc_storage_handle_t handle, tinyusb_msc_event_t *e,
 
 
 
-extern "C" [[noreturn]] void app_main(void) {
+extern "C" void app_main(void) {
   Boards::Board *board = get_board();
   switch(board->BootReason()){
 
@@ -179,14 +179,11 @@ extern "C" [[noreturn]] void app_main(void) {
 #endif
 
   initInputTimer(board);
-
-  // vTaskDelay(500 / portTICK_PERIOD_MS); //Let USB Settle
-
+  
   if (!board->StorageReady()) {
     xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_NO_STORAGE, eSetValueWithOverwrite);
-    while (true){
-      return;
-    }
+    LOGI(TAG, "Storage not Ready");
+    return;
   }
 
   MAIN_STATES oldState = MAIN_NONE;
