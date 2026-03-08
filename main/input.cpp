@@ -10,45 +10,33 @@
 #include "ui/menu.h"
 #include "hw_init.h"
 
-extern MAIN_STATES currentState;
-
 static void powerOff() {
   get_board()->PowerOff();
 }
 
 static void imageCurrent() {
-  if (currentState == MAIN_NORMAL) {
-    TaskHandle_t display_task_handle = xTaskGetHandle("display_task");
-    xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_FILE, eSetValueWithOverwrite);
-  }
+  TaskHandle_t display_task_handle = xTaskGetHandle("display_task");
+  xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_FILE, eSetValueWithOverwrite);
 }
 
 static void imageNext() {
-  if (currentState == MAIN_NORMAL) {
-    TaskHandle_t display_task_handle = xTaskGetHandle("display_task");
-    xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_NEXT, eSetValueWithOverwrite);
-  }
+  TaskHandle_t display_task_handle = xTaskGetHandle("display_task");
+  xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_NEXT, eSetValueWithOverwrite);
 }
 
 static void imagePrevious() {
-  if (currentState == MAIN_NORMAL) {
-    TaskHandle_t display_task_handle = xTaskGetHandle("display_task");
-    xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_PREVIOUS, eSetValueWithOverwrite);
-  }
+  TaskHandle_t display_task_handle = xTaskGetHandle("display_task");
+  xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_PREVIOUS, eSetValueWithOverwrite);
 }
 
 static void imageSpecial1() {
-  if (currentState == MAIN_NORMAL) {
-    TaskHandle_t display_task_handle = xTaskGetHandle("display_task");
-    xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_SPECIAL_1, eSetValueWithOverwrite);
-  }
+  TaskHandle_t display_task_handle = xTaskGetHandle("display_task");
+  xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_SPECIAL_1, eSetValueWithOverwrite);
 }
 
 static void imageSpecial2() {
-  if (currentState == MAIN_NORMAL) {
-    TaskHandle_t display_task_handle = xTaskGetHandle("display_task");
-    xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_SPECIAL_2, eSetValueWithOverwrite);
-  }
+  TaskHandle_t display_task_handle = xTaskGetHandle("display_task");
+  xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_SPECIAL_2, eSetValueWithOverwrite);
 }
 
 static void openMenu();
@@ -68,16 +56,17 @@ static long long lastKeyPress;
 static esp_timer_handle_t inputTimer = nullptr;
 
 static void openMenu() {
-  if (currentState == MAIN_NORMAL) {
-    esp_timer_stop(inputTimer);
     lvgl_menu_open();
-  }
 }
 
 void startInputTimer() {
   if (!esp_timer_is_active(inputTimer)) {
     ESP_ERROR_CHECK(esp_timer_start_periodic(inputTimer, 10 * 1000));
   }
+}
+
+void stopInputTimer() {
+  esp_timer_stop(inputTimer);
 }
 
 static void inputTimerHandler(void *args) {
@@ -134,10 +123,8 @@ void initInputTimer(Boards::Board *board) {
 TimerHandle_t inputTimer;
 
 static void openMenu() {
-  if (currentState == MAIN_NORMAL) {
     xTimerStop(inputTimer, portMAX_DELAY);
     lvgl_menu_open();
-  }
 }
 
 void startInputTimer() {
@@ -146,7 +133,6 @@ void startInputTimer() {
 
 static void inputTimerHandler(TimerHandle_t) {
   auto board = get_board();
-  if (currentState == MAIN_NORMAL) {
       hal::keys::EVENT_STATE *key_state = board->GetKeys()->read();
 
       switch (inputState) {
@@ -196,7 +182,6 @@ static void inputTimerHandler(TimerHandle_t) {
 //          LOGI(TAG, "x: %d y: %d", e.first, e.second);
 //        }
 //      }
-  }
 }
 
 void initInputTimer(Boards::Board *board) {

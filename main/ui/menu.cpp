@@ -189,6 +189,7 @@ void battery_draw() {
 static void lvgl_wake_up() {
     LOGI(TAG, "Wakeup");
     get_board()->PmLock();
+    stopInputTimer();
 
     cbData.display = get_board()->GetDisplay();
 
@@ -224,6 +225,7 @@ void task(void *) {
         task_delay = 0;
         display_task_handle = xTaskGetHandle("display_task");
         xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_MENU, eSetValueWithOverwrite);
+        xTaskNotifyWaitIndexed(0, 0, 0xffffffff, &option, portMAX_DELAY);
         battery_draw();
         main_menu();
         LOGI(TAG, "LVGL_RESUME");
@@ -232,7 +234,8 @@ void task(void *) {
         lvgl_wake_up();
         task_delay = 0;
         display_task_handle = xTaskGetHandle("display_task");
-        xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_MENU, eSetValueWithOverwrite);
+        xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_NOTIFY_USB, eSetValueWithOverwrite);
+        xTaskNotifyWaitIndexed(0, 0, 0xffffffff, &option, portMAX_DELAY);
         battery_draw();
         lvgl_usb_connected();
         LOGI(TAG, "LVGL_RESUME");

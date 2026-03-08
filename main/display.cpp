@@ -493,6 +493,8 @@ void display_task(void *params) {
   config->getPath(current_file);
   char card_path[MAX_FILE_LEN + 1];
   uint32_t option = 0;
+  TaskHandle_t lvglTask = xTaskGetHandle("LVGL");
+
   while (true) {
     option = 0;
     if (xTaskNotifyWaitIndexed(0, 0, 0xffffffff, &option, delay == -1 ? portMAX_DELAY : delay)) {
@@ -564,9 +566,12 @@ void display_task(void *params) {
             delay = -1;
             continue;
           case DISPLAY_NOTIFY_USB:
+            LOGD(TAG, "DISPLAY_NOTIFY_USB");
+            delay = -1;
             closedir_sorted(&dir);
             dir.dirptr = nullptr;
-            break;
+            xTaskNotifyIndexed(lvglTask, 0, 0, eSetValueWithOverwrite);
+            continue;
           case DISPLAY_ADVANCE:
             advance = true;
             break;
@@ -578,6 +583,7 @@ void display_task(void *params) {
           case DISPLAY_MENU:
             delay = -1;
             LOGD("TAG", "Display menu");
+            xTaskNotifyIndexed(lvglTask, 0, 0, eSetValueWithOverwrite);
             continue;
           default:
             break;

@@ -13,7 +13,6 @@
 #include "display.h"
 
 #include "hw_init.h"
-#include "ui/usb_connected.h"
 #include "input.h"
 #include "filebuffer.h"
 
@@ -68,42 +67,38 @@ void dumpDebugFunc(TimerHandle_t) {
 }
 
 static void dumpDebugTimerInit() {
-  // xTimerStart(xTimerCreate("dumpDebugTimer", 10000/portTICK_PERIOD_MS, pdTRUE, nullptr, dumpDebugFunc), 0);
+  xTimerStart(xTimerCreate("dumpDebugTimer", 60000/portTICK_PERIOD_MS, pdTRUE, nullptr, dumpDebugFunc), 0);
 }
-
-MAIN_STATES currentState = MAIN_NONE;
 
 /*!
  * Task to check battery status, and update device
  * @param args
  */
 static void lowBatteryTask(TimerHandle_t) {
-  auto *board = get_board();
-  TaskHandle_t lvglHandle;
-  TaskHandle_t display_task_handle;
-
-  if (currentState != MAIN_OTA) {
-    switch (board->PowerState()) {
-      case Boards::BOARD_POWER_NORMAL:
-        if (currentState == MAIN_LOW_BATT) {
-          currentState = MAIN_NORMAL;
-        }
-        break;
-      case Boards::BOARD_POWER_LOW:
-        lvglHandle = xTaskGetHandle("LVGL");
-        xTaskNotifyIndexed(lvglHandle, 0, LVGL_STOP, eSetValueWithOverwrite);
-        display_task_handle = xTaskGetHandle("display_task");
-        xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_BATT, eSetValueWithOverwrite);
-        currentState = MAIN_LOW_BATT;
-        break;
-      case Boards::BOARD_POWER_CRITICAL:
-        display_task_handle = xTaskGetHandle("display_task");
-        xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_BATT, eSetValueWithOverwrite);
-        vTaskDelay(15000 / portTICK_PERIOD_MS);
-        board->PowerOff();
-        break;
-    }
-  }
+  // auto *board = get_board();
+  // TaskHandle_t lvglHandle;
+  // TaskHandle_t display_task_handle;
+  //
+  //   switch (board->PowerState()) {
+  //     case Boards::BOARD_POWER_NORMAL:
+  //       if (currentState == MAIN_LOW_BATT) {
+  //         currentState = MAIN_NORMAL;
+  //       }
+  //       break;
+  //     case Boards::BOARD_POWER_LOW:
+  //       lvglHandle = xTaskGetHandle("LVGL");
+  //       xTaskNotifyIndexed(lvglHandle, 0, LVGL_STOP, eSetValueWithOverwrite);
+  //       display_task_handle = xTaskGetHandle("display_task");
+  //       xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_BATT, eSetValueWithOverwrite);
+  //       currentState = MAIN_LOW_BATT;
+  //       break;
+  //     case Boards::BOARD_POWER_CRITICAL:
+  //       display_task_handle = xTaskGetHandle("display_task");
+  //       xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_BATT, eSetValueWithOverwrite);
+  //       vTaskDelay(15000 / portTICK_PERIOD_MS);
+  //       board->PowerOff();
+  //       break;
+  //   }
 }
 
 static void initLowBatteryTask() {
@@ -112,16 +107,25 @@ static void initLowBatteryTask() {
 
 #ifdef ESP_PLATFORM
 static void usbCall(tinyusb_msc_storage_handle_t handle, tinyusb_msc_event_t *e, void *arg){
-  TaskHandle_t mainHandle = xTaskGetHandle("main");
-  LOGI(TAG, "USB Callback %d", e->mount_point == TINYUSB_MSC_STORAGE_MOUNT_USB);
-  if(currentState == MAIN_NORMAL && e->mount_point == TINYUSB_MSC_STORAGE_MOUNT_USB){
-    currentState = MAIN_USB;
-    TaskHandle_t display_task_handle = xTaskGetHandle("display_task");
-    xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_NOTIFY_USB, eSetValueWithOverwrite);
-    xTaskNotifyIndexed(mainHandle, 0, 0, eSetValueWithOverwrite);
-  } else if(e->mount_point == TINYUSB_MSC_STORAGE_MOUNT_APP && currentState == MAIN_USB){
-    currentState = MAIN_NORMAL;
-    xTaskNotifyIndexed(mainHandle, 0, 0, eSetValueWithOverwrite);
+  LOGI(TAG, "USB Event %d", e->id);
+  if (e->id != TINYUSB_MSC_EVENT_MOUNT_COMPLETE) {
+    return;
+  }
+  TaskHandle_t lvglHandle = xTaskGetHandle("LVGL");
+  TaskHandle_t display_task_handle = xTaskGetHandle("display_task");
+
+  auto board = get_board();
+  LOGI(TAG, "USB Callback %s", e->mount_point == TINYUSB_MSC_STORAGE_MOUNT_USB?"USB Mounted":"App mounted");
+  if(e->mount_point == TINYUSB_MSC_STORAGE_MOUNT_USB){
+    lvgl_usb_open();
+  } else if(e->mount_point == TINYUSB_MSC_STORAGE_MOUNT_APP){
+    xTaskNotifyIndexed(lvglHandle, 0, LVGL_STOP, eSetValueWithOverwrite);
+    //Check for OTA File
+    if (board->OtaCheck()) {
+      // vTaskDelay(1000 / portTICK_PERIOD_MS);
+      xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_OTA, eSetValueWithOverwrite);
+      board->OtaInstall();
+    }
   }
 }
 #endif
@@ -186,56 +190,17 @@ extern "C" void app_main(void) {
     return;
   }
 
-  MAIN_STATES oldState = MAIN_NONE;
-  TaskHandle_t lvglHandle = xTaskGetHandle("LVGL");
-
 #ifdef ESP_PLATFORM
   board->UsbCallBack(&usbCall);
 #endif
 
-  if(board->UsbConnected()){
-    currentState = MAIN_USB;
-  } else {
-    currentState = MAIN_NORMAL;
+  // vTaskDelay(500 / portTICK_PERIOD_MS);
+
+  if(!board->UsbConnected()){
     xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_FILE, eSetValueWithOverwrite);
   }
-
-  while (true) {
-    if (oldState != currentState) {
-      //Handle state transitions
-      LOGI(TAG, "State %d", currentState);
-      switch (currentState) {
-        case MAIN_NONE:
-          break;
-        case MAIN_NORMAL:
-          if (oldState == MAIN_USB) {
-            vTaskDelay(200 / portTICK_PERIOD_MS);
-            xTaskNotifyIndexed(lvglHandle, 0, LVGL_STOP, eSetValueWithOverwrite);
-            //Check for OTA File
-            if (board->OtaCheck()) {
-                vTaskDelay(1000 / portTICK_PERIOD_MS);
-                xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_OTA, eSetValueWithOverwrite);
-              board->OtaInstall();
-              currentState = MAIN_OTA;
-              break;
-            }
-          }
-          break;
-        case MAIN_USB:
-          xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_NOTIFY_USB, eSetValueWithOverwrite);
-          vTaskDelay(100 / portTICK_PERIOD_MS);
-          lvgl_usb_open();
-          break;
-        default:
-          break;
-      }
-      oldState = currentState;
-    }
-
-    xTaskNotifyWaitIndexed(0, 0, 0xffffffff, nullptr, portMAX_DELAY);
-  }
-
 }
+
 #ifdef ESP_PLATFORM
 IRAM_ATTR void vApplicationTickHook() {
   lv_tick(nullptr);

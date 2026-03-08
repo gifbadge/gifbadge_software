@@ -27,3 +27,4 @@ enum MAIN_STATES {
 
 void initInputTimer(Boards::Board *board);
 void startInputTimer();
+void stopInputTimer();
