@@ -76,7 +76,7 @@ void hal::display::oslinux::display_sdl::update() {
 
     // copy to window
     SDL_RenderTexture(renderer, pixels, nullptr, nullptr);
-    // SDL_RenderTexture(renderer, mask, nullptr, nullptr);
+    SDL_RenderTexture(renderer, mask, nullptr, nullptr);
     SDL_RenderPresent(renderer);
     if (_callback) {
       _callback();

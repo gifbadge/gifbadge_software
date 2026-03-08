@@ -103,7 +103,12 @@ void board_linux::OtaInstall() {
   Board::OtaInstall();
 }
 int board_linux::OtaStatus() {
-  return Board::OtaStatus();
+  _otaStatus += 1;
+  if (_otaStatus > 100) {
+    _otaStatus = 0;
+  }
+  printf("Ota Status %d\n", _otaStatus);
+  return _otaStatus;
 }
 Boards::WakeupSource board_linux::BootReason() {
   return Board::BootReason();

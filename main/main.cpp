@@ -199,6 +199,13 @@ extern "C" void app_main(void) {
   if(!board->UsbConnected()){
     xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_FILE, eSetValueWithOverwrite);
   }
+
+#ifndef ESP_PLATFORM
+  while (true) {
+    vTaskDelay(1000/portTICK_RATE_MS);
+  }
+#endif
+
 }
 
 #ifdef ESP_PLATFORM
@@ -333,16 +340,12 @@ void handle_sigint(int) {
 bool usbState = false;
 
 static void usbCall(){
-  TaskHandle_t mainHandle = xTaskGetHandle("app_main");
+  TaskHandle_t lvglHandle = xTaskGetHandle("LVGL");
   usbState = !usbState;
   if(usbState){
-    currentState = MAIN_USB;
-    TaskHandle_t display_task_handle = xTaskGetHandle("display_task");
-    xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_NOTIFY_USB, eSetValueWithOverwrite);
-    xTaskNotifyIndexed(mainHandle, 0, 0, eSetValueWithOverwrite);
+    lvgl_usb_open();
   } else{
-    currentState = MAIN_NORMAL;
-    xTaskNotifyIndexed(mainHandle, 0, 0, eSetValueWithOverwrite);
+    xTaskNotifyIndexed(lvglHandle, 0, LVGL_STOP, eSetValueWithOverwrite);
   }
 }
 

@@ -71,5 +71,6 @@ class board_linux : public Boards::Board {
   hal::touch::oslinux::touch_sdl *_touch;
   void *_buffer = nullptr;
   char _storagePath[128];
+  int _otaStatus = 0;
 
 };

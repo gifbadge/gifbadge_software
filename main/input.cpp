@@ -131,6 +131,10 @@ void startInputTimer() {
   xTimerStart(inputTimer,0);
 }
 
+void stopInputTimer() {
+  xTimerStop(inputTimer, portMAX_DELAY);
+}
+
 static void inputTimerHandler(TimerHandle_t) {
   auto board = get_board();
       hal::keys::EVENT_STATE *key_state = board->GetKeys()->read();
