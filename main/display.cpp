@@ -87,25 +87,6 @@ class TooLargeImage : public ErrorImage {
   }
 };
 
-/**
- * Used to display OTA status during update
- */
-class OTAImage : public ErrorImage {
- public:
-  explicit OTAImage(std::pair<int16_t, int16_t> size) : ErrorImage(size, nullptr) {
-    strcpy(_error, "Update In Progress\n");
-    _delay = 500;
-  }
-  frameReturn GetFrame(uint8_t *outBuf, int16_t x, int16_t y, int16_t width) override {
-    int percent = get_board()->OtaStatus();
-    sprintf(_error, "Update In Progress\n%d%%", percent);
-    return ErrorImage::GetFrame(outBuf, x, y, width);
-  }
-  bool Animated() override {
-    return true;
-  }
-};
-
 class NoStorageImage : public ErrorImage {
  public:
   explicit NoStorageImage(screenResolution size) : ErrorImage(size, nullptr) {
@@ -528,11 +509,6 @@ void display_task(void *params) {
             if (last_mode != DISPLAY_BATT) {
               in.reset(display_image_batt());
             }
-            file_position = -1;
-            last_mode = static_cast<DISPLAY_OPTIONS>(option);
-            break;
-          case DISPLAY_OTA:
-            in = std::make_unique<image::OTAImage>(display->size);
             file_position = -1;
             last_mode = static_cast<DISPLAY_OPTIONS>(option);
             break;

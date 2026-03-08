@@ -24,6 +24,7 @@
 #include "timers.h"
 #include "touch.h"
 #include "ui/battery.h"
+#include "ui/ota.h"
 
 static const char *TAG = "MENU";
 
@@ -77,8 +78,11 @@ void lv_tick(TimerHandle_t) {
   lv_tick_inc(portTICK_PERIOD_MS);
 }
 
+bool lvgl_status = false;
+
 void lvgl_close() {
   LOGI(TAG, "Close");
+  lvgl_status = false;
   get_board()->GetDisplay()->onColorTransDone(nullptr);
   startInputTimer();
 
@@ -91,6 +95,7 @@ void lvgl_close() {
 
 static void lvgl_wake_up() {
     LOGI(TAG, "Wakeup");
+    lvgl_status = true;
     get_board()->PmLock();
     stopInputTimer();
 
@@ -138,6 +143,7 @@ void task(void *) {
         xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_MENU, eSetValueWithOverwrite);
         xTaskNotifyWaitIndexed(0, 0, 0xffffffff, &option, portMAX_DELAY);
         lvgl_screen_init();
+        battery_widget(lv_layer_top());
         main_menu();
         LOGI(TAG, "LVGL_RESUME");
         break;
@@ -150,7 +156,20 @@ void task(void *) {
         lvgl_screen_init();
         battery_widget(lv_layer_top());
         lvgl_usb_connected();
-        LOGI(TAG, "LVGL_RESUME");
+        LOGI(TAG, "LVGL_RESUME_USB");
+        break;
+      case LVGL_RESUME_OTA:
+        if (lvgl_status == false) {
+          lvgl_wake_up();
+          task_delay = 0;
+          display_task_handle = xTaskGetHandle("display_task");
+          xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_NOTIFY_USB, eSetValueWithOverwrite);
+          xTaskNotifyWaitIndexed(0, 0, 0xffffffff, &option, portMAX_DELAY);
+          lvgl_screen_init();
+          battery_widget(lv_layer_top());
+        }
+        lvgl_ota();
+        LOGI(TAG, "LVGL_RESUME_OTA");
         break;
       default:
         task_delay = static_cast<int32_t>(lv_timer_handler());
@@ -242,6 +261,10 @@ void lvgl_menu_open() {
 
 void lvgl_usb_open() {
   xTaskNotifyIndexed(lvgl_task, 0, LVGL_RESUME_USB, eSetValueWithOverwrite);
+}
+
+void lvgl_ota_open() {
+  xTaskNotifyIndexed(lvgl_task, 0, LVGL_RESUME_OTA, eSetValueWithOverwrite);
 }
 
 

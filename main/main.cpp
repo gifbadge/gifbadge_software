@@ -123,7 +123,7 @@ static void usbCall(tinyusb_msc_storage_handle_t handle, tinyusb_msc_event_t *e,
     //Check for OTA File
     if (board->OtaCheck()) {
       // vTaskDelay(1000 / portTICK_PERIOD_MS);
-      xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_OTA, eSetValueWithOverwrite);
+      lvgl_ota_open();
       board->OtaInstall();
     }
   }

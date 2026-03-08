@@ -24,6 +24,7 @@ LV_FONT_DECLARE(battery_symbols_14)
 #define ICON_UP "\ue5d8"
 
 #define ICON_USB "\ue1e0"
+#define ICON_UPDATE "\ue8d7"
 
 extern lv_style_t icon_style;
 extern lv_style_t menu_font_style;

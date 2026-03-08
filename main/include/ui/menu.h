@@ -41,13 +41,15 @@ enum LVGL_TASK_SIGNALS {
   LVGL_STOP,
   LVGL_EXIT,
   LVGL_RESUME_MENU,
-  LVGL_RESUME_USB
+  LVGL_RESUME_USB,
+  LVGL_RESUME_OTA
 };
 
 void lvgl_init(Boards::Board *);
 void lvgl_menu_open();
 bool lvgl_menu_state();
 void lvgl_usb_open();
+void lvgl_ota_open();
 
 lv_obj_t *create_screen();
 void destroy_screens();
