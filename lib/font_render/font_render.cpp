@@ -53,7 +53,7 @@ static void pixel_callback(int16_t x, int16_t y, uint8_t count, uint8_t alpha,
     while (count--)
     {
         pos = (uint32_t)s->width * y + x;
-        tmp_buffer[pos] = __bswap16(alphaBlendRGB565(alpha, 0, 0xFFFF));
+        tmp_buffer[pos] = alphaBlendRGB565(alpha, 0xFFFF, 0x2966);
 
         x++;
     }
@@ -120,9 +120,6 @@ int render_text_centered(int16_t x_max, int16_t y_max, int16_t margin, const cha
     state.font = font;
     state.alignment = MF_ALIGN_CENTER;
     state.anchor = x_max/2;
-
-    /* Initialize image to white */
-    memset(state.buffer, 255, x_max * height);
 
     /* Render the text */
     mf_wordwrap(font, x_max - 2 * margin,

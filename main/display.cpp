@@ -58,7 +58,9 @@ class ErrorImage : public image::Image {
   };
 
   frameReturn GetFrame(uint8_t *outBuf, int16_t x, int16_t y, int16_t width) override {
-    memset(outBuf, 255, resolution.first * resolution.second * 2);
+    for (int i = 0; i < resolution.first * resolution.second; i++) {
+      reinterpret_cast<uint16_t *>(outBuf)[i] = 0x2966;
+    }
     render_text_centered(resolution.first, resolution.second, 10, _error, outBuf);
     return {frameStatus::OK, _delay};
   }
