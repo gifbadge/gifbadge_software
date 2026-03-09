@@ -33,6 +33,8 @@ class esp32s3 : public Board {
     OtaError OtaValidate() override;
     void OtaInstall() override;
     int OtaStatus() override;
+    OtaError OtaState() override;
+    const char * OtaString() override;
     static void VbusHandler(bool state);
 
   protected:
@@ -45,6 +47,9 @@ class esp32s3 : public Board {
     static void OtaInstallTask(void *arg);
     TaskHandle_t _ota_task_handle = nullptr;
     int _ota_status = -1;
+    OtaError _ota_error = OtaError::OK;
+    char _ota_error_str[64] = "";
+    void _ota_error_set(const char *str);
     esp_err_t esp32s3_usb_init(gpio_num_t usb_sense);
 };
 }

@@ -170,6 +170,18 @@ int esp32s3::OtaStatus() {
   return _ota_status;
 }
 
+OtaError esp32s3::OtaState() {
+  return _ota_error;
+}
+
+void esp32s3::_ota_error_set(const char *str) {
+  strncpy(_ota_error_str, str, 63);
+}
+
+const char * esp32s3::OtaString() {
+  return _ota_error_str;
+}
+
 void esp32s3::OtaInstallTask(void *arg) {
   esp_err_t err;
   auto *board = static_cast<esp32s3 *>(arg);
@@ -210,12 +222,30 @@ void esp32s3::OtaInstallTask(void *arg) {
   OtaError validation_err = board->OtaValidate();
   if (validation_err != OtaError::OK) {
     ESP_LOGE(TAG, "validate failed with %d", (int) validation_err);
+    board->_ota_error = validation_err;
+#ifdef CONFIG_ESP_ERR_TO_NAME_LOOKUP
+    switch (validation_err) {
+      case OtaError::WRONG_CHIP:
+        board->_ota_error_set("Wrong Chip");
+        break;
+      case OtaError::WRONG_BOARD:
+        board->_ota_error_set("Wrong Board");
+        break;
+      default:
+        break;
+    }
+#endif
+    board->_ota_error = OtaError::FAIL;
     vTaskDelete(nullptr);
   }
 
   err = esp_ota_begin(update_partition, ota_size, &update_handle);
   if (err != ESP_OK) {
     ESP_LOGE(TAG, "esp_ota_begin failed (%s)", esp_err_to_name(err));
+#ifdef CONFIG_ESP_ERR_TO_NAME_LOOKUP
+    board->_ota_error_set(esp_err_to_name(err));
+#endif
+    board->_ota_error = OtaError::FAIL;
     esp_ota_abort(update_handle);
     vTaskDelete(nullptr);
   }
@@ -226,6 +256,10 @@ void esp32s3::OtaInstallTask(void *arg) {
   static char *ota_buffer = static_cast<char *>(malloc(OTA_BUFFER_SIZE));
   if (ota_buffer == nullptr) {
     board->_ota_status = -2;
+#ifdef CONFIG_ESP_ERR_TO_NAME_LOOKUP
+    board->_ota_error_set("Not enough memory");
+#endif
+    board->_ota_error = OtaError::FAIL;
   }
 
   size_t bytes_read;
@@ -240,6 +274,10 @@ void esp32s3::OtaInstallTask(void *arg) {
     err = esp_ota_write(update_handle, ota_buffer, bytes_read);
     if (err != ESP_OK) {
       ESP_LOGE(TAG, "esp_ota_write failed (%s)!", esp_err_to_name(err));
+#ifdef CONFIG_ESP_ERR_TO_NAME_LOOKUP
+      board->_ota_error_set(esp_err_to_name(err));
+#endif
+      board->_ota_error = OtaError::FAIL;
       esp_ota_abort(update_handle);
     }
   }
@@ -250,11 +288,11 @@ void esp32s3::OtaInstallTask(void *arg) {
 
   err = esp_ota_end(update_handle);
   if (err != ESP_OK) {
-    if (err == ESP_ERR_OTA_VALIDATE_FAILED) {
-      ESP_LOGE(TAG, "Image validation failed, image is corrupted");
-    } else {
       ESP_LOGE(TAG, "esp_ota_end failed (%s)!", esp_err_to_name(err));
-    }
+#ifdef CONFIG_ESP_ERR_TO_NAME_LOOKUP
+    board->_ota_error_set(esp_err_to_name(err));
+#endif
+    board->_ota_error = OtaError::FAIL;
     if (ota_buffer) {
       free(ota_buffer);
     }
@@ -264,6 +302,10 @@ void esp32s3::OtaInstallTask(void *arg) {
   err = esp_ota_set_boot_partition(update_partition);
   if (err != ESP_OK) {
     ESP_LOGE(TAG, "esp_ota_set_boot_partition failed (%s)!", esp_err_to_name(err));
+#ifdef CONFIG_ESP_ERR_TO_NAME_LOOKUP
+    board->_ota_error_set(esp_err_to_name(err));
+#endif
+    board->_ota_error = OtaError::FAIL;
     if (ota_buffer) {
       free(ota_buffer);
     }

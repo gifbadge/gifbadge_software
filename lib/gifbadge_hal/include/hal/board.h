@@ -39,6 +39,8 @@ enum class OtaError {
   WRONG_CHIP,
   WRONG_BOARD,
   SAME_VERSION,
+  VERIFICATION_FAILED,
+  FAIL,
 };
 
 enum class WakeupSource {
@@ -246,6 +248,19 @@ class Board {
    * @return 0 to 100%
    */
   virtual int OtaStatus() {return 100;};
+/**
+ * Get the current state of the OTA update
+ * @return 0 to 100%
+ */
+  virtual OtaError OtaState() {return OtaError::OK;};
+
+/**
+* Get the "friendly" error message
+* @return 0 to 100%
+*/
+  virtual const char * OtaString() {return "";};
+
+
 
   /**
    * The source of the wakeup. E.G. power button, hw reset
