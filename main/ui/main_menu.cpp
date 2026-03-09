@@ -18,8 +18,16 @@
 #include "hw_init.h"
 #include "ui/device_info.h"
 #include "ui/help.h"
+#include "ui/no_sd.h"
+
+lv_obj_t *main_menu_obj = nullptr;
 
 static lv_obj_t * exit_callback() {
+  if (!get_board()->StorageReady()) {
+    lv_obj_del(main_menu_obj);
+    lvgl_nosd();
+    return nullptr;
+  }
   TaskHandle_t handle = xTaskGetHandle("LVGL");
   xTaskNotifyIndexed(handle, 0, LVGL_STOP, eSetValueWithOverwrite);
   return nullptr;
@@ -103,10 +111,10 @@ static lv_obj_t *subMenu(lv_obj_t *parent, const char *name, MenuType menu){
 void main_menu() {
     lv_obj_t *scr = lv_scr_act();
     new_group();
-    lv_obj_t *main_menu = lv_file_list_create(scr);
-    lv_file_list_icon_style(main_menu, &icon_style);
+    main_menu_obj = lv_file_list_create(scr);
+    lv_file_list_icon_style(main_menu_obj, &icon_style);
 
-    lv_obj_t *backlight_button = lv_file_list_add(main_menu, "\ue3ab");
+    lv_obj_t *backlight_button = lv_file_list_add(main_menu_obj, "\ue3ab");
     lv_obj_t *slider = lv_slider_create(backlight_button);
     lv_obj_set_width(slider, lv_pct(80));
     lv_obj_set_style_bg_color(slider, lv_color_white(), LV_PART_KNOB);
@@ -120,7 +128,7 @@ void main_menu() {
     lv_slider_set_value(slider, get_board()->GetConfig()->getBacklight(), LV_ANIM_OFF);
 
     if (last_fps > 0) {
-      lv_obj_t *fps = lv_file_list_add(main_menu, nullptr);
+      lv_obj_t *fps = lv_file_list_add(main_menu_obj, nullptr);
       lv_obj_add_style(fps, &menu_font_style, LV_PART_MAIN);
       lv_obj_t *fps_text = lv_label_create(fps);
       char fps_text_str[64];
@@ -128,15 +136,19 @@ void main_menu() {
       lv_label_set_text(fps_text, fps_text_str);
     }
 
-    subMenu(main_menu, "File Select", &FileOptions);
-    subMenu(main_menu, "Storage", &storage_menu);
-    subMenu(main_menu, "Device Info", &device_info);
-    subMenu(main_menu, "Shutdown", &ShutdownCallback);
-    subMenu(main_menu, "Help", &help);
-    subMenu(main_menu, "Exit", &exit_callback);
+    lv_obj_t *file_menu = subMenu(main_menu_obj, "File Select", &FileOptions);
+    lv_obj_t *storagemenu = subMenu(main_menu_obj, "Storage", &storage_menu);
+    if (!get_board()->StorageReady()) {
+      lv_obj_add_state(file_menu, LV_STATE_DISABLED);
+      lv_obj_add_state(storagemenu, LV_STATE_DISABLED);
+    }
+    subMenu(main_menu_obj, "Device Info", &device_info);
+    subMenu(main_menu_obj, "Shutdown", &ShutdownCallback);
+    subMenu(main_menu_obj, "Help", &help);
+    subMenu(main_menu_obj, "Exit", &exit_callback);
 
     lv_obj_add_event_cb(scr, mainMenuCleanup, LV_EVENT_DELETE, lv_group_get_default());
 
-    lv_file_list_scroll_to_view(main_menu, 0);
+    lv_file_list_scroll_to_view(main_menu_obj, 0);
 }
 

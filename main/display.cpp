@@ -18,7 +18,6 @@
 #include "images/low_batt_png.h"
 
 #include "font_render.h"
-#include "ui/menu.h"
 
 #include "directory.h"
 #include "file.h"
@@ -89,12 +88,6 @@ class TooLargeImage : public ErrorImage {
   }
 };
 
-class NoStorageImage : public ErrorImage {
- public:
-  explicit NoStorageImage(screenResolution size) : ErrorImage(size, nullptr) {
-    strcpy(_error, "No SDCARD");
-  }
-};
 class ResizingImage: public image::ErrorImage {
   public:
   explicit ResizingImage(std::pair<int16_t, int16_t> size) : ErrorImage(size, nullptr) {
@@ -513,11 +506,6 @@ void display_task(void *params) {
             }
             file_position = -1;
             last_mode = static_cast<DISPLAY_OPTIONS>(option);
-            break;
-          case DISPLAY_NO_STORAGE:
-            last_mode = static_cast<DISPLAY_OPTIONS>(option);
-            in = std::make_unique<image::NoStorageImage>(display->size);
-            file_position = -1;
             break;
           case DISPLAY_SPECIAL_1:
             LOGD(TAG, "DISPLAY_SPECIAL_1");

@@ -20,6 +20,7 @@ SET(SRC "main.cpp"
         "ui/help.cpp"
         "ui/battery.cpp"
         "ui/ota.cpp"
+        "ui/no_sd.cpp"
 )
 
 if (ESP_PLATFORM)
@@ -40,7 +41,7 @@ endif ()
 set(font_symbols "0xe3f4,0xe897,0xe41b,0xe41b,0xe425,0xe161,0xe5c9,0xe3ab,0xe2c7,0xe2c8,0xe623,0xf80e,0xf568,0xe5d8,0xf182,0xf181")
 message(font_symbols="${font_symbols}")
 
-set(special_symbols "0xe1e0,0xe3f4,0xe8d7")
+set(special_symbols "0xe1e0,0xe3f4,0xe8d7,0xf057")
 message(special_symbols="${special_symbols}")
 
 set(battery_symbols "0xea0b,0xf22f,0xe5cd") #Charging,!, X

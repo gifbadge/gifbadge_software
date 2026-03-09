@@ -185,7 +185,7 @@ extern "C" void app_main(void) {
   initInputTimer(board);
   
   if (!board->StorageReady()) {
-    xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_NO_STORAGE, eSetValueWithOverwrite);
+    lvgl_no_sd_open();
     LOGI(TAG, "Storage not Ready");
     return;
   }

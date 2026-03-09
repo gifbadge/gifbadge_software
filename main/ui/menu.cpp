@@ -24,6 +24,7 @@
 #include "timers.h"
 #include "touch.h"
 #include "ui/battery.h"
+#include "ui/no_sd.h"
 #include "ui/ota.h"
 
 static const char *TAG = "MENU";
@@ -171,6 +172,17 @@ void task(void *) {
         lvgl_ota();
         LOGI(TAG, "LVGL_RESUME_OTA");
         break;
+      case LVGL_RESUME_NOSD:
+        lvgl_wake_up();
+        task_delay = 0;
+        display_task_handle = xTaskGetHandle("display_task");
+        xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_MENU, eSetValueWithOverwrite);
+        xTaskNotifyWaitIndexed(0, 0, 0xffffffff, &option, portMAX_DELAY);
+        lvgl_screen_init();
+        battery_widget(lv_layer_top());
+        lvgl_nosd();
+        LOGI(TAG, "LVGL_RESUME_NOSD");
+        break;
       default:
         task_delay = static_cast<int32_t>(lv_timer_handler());
         if (task_delay > LVGL_TASK_MAX_DELAY_MS) {
@@ -265,6 +277,10 @@ void lvgl_usb_open() {
 
 void lvgl_ota_open() {
   xTaskNotifyIndexed(lvgl_task, 0, LVGL_RESUME_OTA, eSetValueWithOverwrite);
+}
+
+void lvgl_no_sd_open() {
+  xTaskNotifyIndexed(lvgl_task, 0, LVGL_RESUME_NOSD, eSetValueWithOverwrite);
 }
 
 
