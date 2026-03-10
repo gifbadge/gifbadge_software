@@ -14,9 +14,6 @@
 #include <sys/stat.h>
 
 #include "image.h"
-#include "png.h"
-#include "images/low_batt_png.h"
-
 #include "font_render.h"
 
 #include "directory.h"
@@ -94,15 +91,6 @@ class ResizingImage: public ErrorImage {
     strcpy(_error, "Resizing");
   }
 };
-}
-
-
-
-static image::PNGImage * display_image_batt() {
-  LOGI(TAG, "Displaying Low Battery");
-  auto *png = new image::PNGImage(get_board()->GetDisplay()->size);
-  png->Open(const_cast<uint8_t *>(low_batt_png), sizeof(low_batt_png));
-  return png;
 }
 
 static std::pair<int16_t, int16_t> lastSize = {0,0};
@@ -499,13 +487,6 @@ void display_task(void *params) {
             LOGD(TAG, "DISPLAY_PREVIOUS");
             next_prev(in, current_file, config, display, -1);
             slideShowRestart();
-            break;
-          case DISPLAY_BATT:
-            if (last_mode != DISPLAY_BATT) {
-              in.reset(display_image_batt());
-            }
-            file_position = -1;
-            last_mode = static_cast<DISPLAY_OPTIONS>(option);
             break;
           case DISPLAY_SPECIAL_1:
             LOGD(TAG, "DISPLAY_SPECIAL_1");

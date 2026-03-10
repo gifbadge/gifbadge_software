@@ -24,6 +24,7 @@
 #include "timers.h"
 #include "touch.h"
 #include "ui/battery.h"
+#include "ui/low_batt.h"
 #include "ui/no_sd.h"
 #include "ui/ota.h"
 
@@ -183,6 +184,19 @@ void task(void *) {
         lvgl_nosd();
         LOGI(TAG, "LVGL_RESUME_NOSD");
         break;
+      case LVGL_RESUME_LOW_BATTERY:
+        if (lvgl_status == false) {
+          lvgl_wake_up();
+          task_delay = 0;
+          display_task_handle = xTaskGetHandle("display_task");
+          xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_NOTIFY_USB, eSetValueWithOverwrite);
+          xTaskNotifyWaitIndexed(0, 0, 0xffffffff, &option, portMAX_DELAY);
+          lvgl_screen_init();
+          battery_widget(lv_layer_top());
+        }
+        lvgl_low_batt();
+        LOGI(TAG, "LVGL_RESUME_LOW_BATTERY");
+        break;
       default:
         task_delay = static_cast<int32_t>(lv_timer_handler());
         if (task_delay > LVGL_TASK_MAX_DELAY_MS) {
@@ -282,6 +296,11 @@ void lvgl_ota_open() {
 void lvgl_no_sd_open() {
   xTaskNotifyIndexed(lvgl_task, 0, LVGL_RESUME_NOSD, eSetValueWithOverwrite);
 }
+
+void lvgl_low_battery_open() {
+  xTaskNotifyIndexed(lvgl_task, 0, LVGL_RESUME_LOW_BATTERY, eSetValueWithOverwrite);
+}
+
 
 
 

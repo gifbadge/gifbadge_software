@@ -43,7 +43,8 @@ enum LVGL_TASK_SIGNALS {
   LVGL_RESUME_MENU,
   LVGL_RESUME_USB,
   LVGL_RESUME_OTA,
-  LVGL_RESUME_NOSD
+  LVGL_RESUME_NOSD,
+  LVGL_RESUME_LOW_BATTERY,
 };
 
 void lvgl_init(Boards::Board *);
@@ -52,6 +53,7 @@ bool lvgl_menu_state();
 void lvgl_usb_open();
 void lvgl_ota_open();
 void lvgl_no_sd_open();
+void lvgl_low_battery_open();
 
 lv_obj_t *create_screen();
 void destroy_screens();

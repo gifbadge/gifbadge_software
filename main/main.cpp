@@ -75,30 +75,20 @@ static void dumpDebugTimerInit() {
  * @param args
  */
 static void lowBatteryTask(TimerHandle_t) {
-  // auto *board = get_board();
-  // TaskHandle_t lvglHandle;
-  // TaskHandle_t display_task_handle;
-  //
-  //   switch (board->PowerState()) {
-  //     case Boards::BOARD_POWER_NORMAL:
-  //       if (currentState == MAIN_LOW_BATT) {
-  //         currentState = MAIN_NORMAL;
-  //       }
-  //       break;
-  //     case Boards::BOARD_POWER_LOW:
-  //       lvglHandle = xTaskGetHandle("LVGL");
-  //       xTaskNotifyIndexed(lvglHandle, 0, LVGL_STOP, eSetValueWithOverwrite);
-  //       display_task_handle = xTaskGetHandle("display_task");
-  //       xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_BATT, eSetValueWithOverwrite);
-  //       currentState = MAIN_LOW_BATT;
-  //       break;
-  //     case Boards::BOARD_POWER_CRITICAL:
-  //       display_task_handle = xTaskGetHandle("display_task");
-  //       xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_BATT, eSetValueWithOverwrite);
-  //       vTaskDelay(15000 / portTICK_PERIOD_MS);
-  //       board->PowerOff();
-  //       break;
-  //   }
+  static bool lastState = false;
+  if (get_board()->PowerState() == Boards::BOARD_POWER_CRITICAL) {
+    if (!lastState) {
+      lvgl_low_battery_open();
+      lastState = true;
+    } else {
+      get_board()->PowerOff();
+    }
+  }
+  else {
+    if (lastState) {
+      lastState = false;
+    }
+  }
 }
 
 static void initLowBatteryTask() {
