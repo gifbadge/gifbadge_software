@@ -105,7 +105,6 @@ static void usbCall(tinyusb_msc_storage_handle_t handle, tinyusb_msc_event_t *e,
     return;
   }
   TaskHandle_t lvglHandle = xTaskGetHandle("LVGL");
-  TaskHandle_t display_task_handle = xTaskGetHandle("display_task");
 
   auto board = get_board();
   LOGI(TAG, "USB Callback %s", e->mount_point == TINYUSB_MSC_STORAGE_MOUNT_USB?"USB Mounted":"App mounted");
