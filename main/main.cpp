@@ -87,6 +87,9 @@ static void lowBatteryTask(TimerHandle_t) {
   else {
     if (lastState) {
       lastState = false;
+      if (!get_board()->UsbConnected()) {
+        lvgl_menu_close();
+      }
     }
   }
 }

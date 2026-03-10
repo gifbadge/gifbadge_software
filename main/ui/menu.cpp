@@ -285,6 +285,10 @@ void lvgl_menu_open() {
   xTaskNotifyIndexed(lvgl_task, 0, LVGL_RESUME_MENU, eSetValueWithOverwrite);
 }
 
+void lvgl_menu_close() {
+  xTaskNotifyIndexed(lvgl_task, 0, LVGL_STOP, eSetValueWithOverwrite);
+}
+
 void lvgl_usb_open() {
   xTaskNotifyIndexed(lvgl_task, 0, LVGL_RESUME_USB, eSetValueWithOverwrite);
 }
