@@ -41,7 +41,7 @@ namespace image {
 /**
  * Render a string as an image to display errors/etc
  */
-class ErrorImage : public image::Image {
+class ErrorImage : public Image {
  public:
   ErrorImage(screenResolution size, const char *error)
       : Image(size), _error("") {
@@ -88,7 +88,7 @@ class TooLargeImage : public ErrorImage {
   }
 };
 
-class ResizingImage: public image::ErrorImage {
+class ResizingImage: public ErrorImage {
   public:
   explicit ResizingImage(std::pair<int16_t, int16_t> size) : ErrorImage(size, nullptr) {
     strcpy(_error, "Resizing");
