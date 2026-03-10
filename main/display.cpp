@@ -444,8 +444,6 @@ void display_task(void *params) {
 
   board->GetBacklight()->setLevel(board->GetConfig()->getBacklight() * 10);
 
-  DISPLAY_OPTIONS last_mode = DISPLAY_NONE;
-
   LOGI(TAG, "Display Resolution %ix%i", display->size.first, display->size.second);
 
   int32_t delay = 1000/portTICK_PERIOD_MS; //Delay for display loop. Is adjusted by the results of the loop method of the image being displayed
@@ -476,7 +474,6 @@ void display_task(void *params) {
             }
             in.reset(openFileUpdatePath(current_file, display));
             slideShowStart(config);
-            last_mode = static_cast<DISPLAY_OPTIONS>(option);
             break;
           case DISPLAY_NEXT:
             LOGD(TAG, "DISPLAY_NEXT");
@@ -493,7 +490,6 @@ void display_task(void *params) {
             get_board()->GetConfig()->getCard(hal::config::cards::UP, card_path);
             if (is_file(card_path)) {
               in.reset(openFile(card_path, display));
-              last_mode = static_cast<DISPLAY_OPTIONS>(option);
               slideShowStop();
             }
             break;
@@ -502,7 +498,6 @@ void display_task(void *params) {
             get_board()->GetConfig()->getCard(hal::config::cards::DOWN, card_path);
             if (is_file(card_path)) {
               in.reset(openFile(card_path, display));
-              last_mode = static_cast<DISPLAY_OPTIONS>(option);
               slideShowStop();
             }
             break;
