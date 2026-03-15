@@ -233,11 +233,11 @@ void touch_read(lv_indev_t *drv, lv_indev_data_t *data) {
 
   auto touch = static_cast<hal::touch::Touch *>(lv_indev_get_driver_data(drv));
   auto i = touch->read();
-  if (i.first > 0 && i.second > 0) {
-    data->point.x = static_cast<int32_t>(i.first);
-    data->point.y = static_cast<int32_t>(i.second);
+  if (i.state == hal::touch::TOUCH_PRESS) {
+    data->point.x = static_cast<int32_t>(i.position.first);
+    data->point.y = static_cast<int32_t>(i.position.second);
     data->state = LV_INDEV_STATE_PRESSED;
-  } else {
+  } else if (i.state == hal::touch::TOUCH_RELEASE){
     data->state = LV_INDEV_STATE_RELEASED;
   }
 }

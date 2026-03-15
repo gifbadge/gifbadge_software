@@ -71,7 +71,7 @@ class touch_ft5x06 final : public hal::touch::Touch {
   explicit touch_ft5x06(i2c_master_bus_handle_t bus);
   ~touch_ft5x06() override = default;
 
-  std::pair<int16_t, int16_t> read() override;
+  touch_data read() override;
  private:
   i2c_master_dev_handle_t i2c_handle = nullptr;
 };

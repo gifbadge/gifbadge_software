@@ -66,21 +66,24 @@ hal::touch::esp32s3::touch_ft5x06::touch_ft5x06(i2c_master_bus_handle_t i2c) {
   i2c_master_transmit(i2c_handle, out, 2 , 100);
 }
 
-std::pair<int16_t, int16_t> hal::touch::esp32s3::touch_ft5x06::read() {
-  uint8_t data_in;
+hal::touch::touch_data hal::touch::esp32s3::touch_ft5x06::read() {
+  uint8_t data_in = 0;
   uint8_t data_out = FT5x06_TOUCH_POINTS;
-  i2c_master_transmit_receive(i2c_handle, &data_out, 1, &data_in, 1, 100);
-  if ((data_in & 0x0f) > 0 && (data_in & 0x0f) < 5) {
-    uint8_t tmp[4] = {0};
-    data_out = FT5x06_TOUCH1_XH;
-    i2c_master_transmit_receive(i2c_handle, &data_out, 1, tmp, 4, 100);
-    auto x = static_cast<int16_t>(((tmp[0] & 0x0f) << 8) + tmp[1]); //not rotated
-    auto y = static_cast<int16_t>(((tmp[2] & 0x0f) << 8) + tmp[3]);
-    if (x > 0 || y > 0) {
-      return {x, y};
+  esp_err_t ret = i2c_master_transmit_receive(i2c_handle, &data_out, 1, &data_in, 1, 10);
+  if (ret == ESP_OK) {
+    if ((data_in & 0x0f) > 0 && (data_in & 0x0f) < 5) {
+      uint8_t tmp[4] = {0};
+      data_out = FT5x06_TOUCH1_XH;
+      i2c_master_transmit_receive(i2c_handle, &data_out, 1, tmp, 4, 100);
+      auto x = static_cast<int16_t>(((tmp[0] & 0x0f) << 8) + tmp[1]); //not rotated
+      auto y = static_cast<int16_t>(((tmp[2] & 0x0f) << 8) + tmp[3]);
+      if (x > 0 || y > 0) {
+        return {.state = TOUCH_PRESS, .position = {x, y}};
+      }
     }
+    return{.state = TOUCH_RELEASE, .position = {0, 0}};
   }
-  return {-1, -1};
+  return{.state = TOUCH_INVALID, .position = {0, 0}};
 }
 
 
