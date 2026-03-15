@@ -19,6 +19,7 @@
 #include "ui/device_info.h"
 #include "ui/help.h"
 #include "ui/no_sd.h"
+#include "ui/reset_settings.h"
 
 lv_obj_t *main_menu_obj = nullptr;
 
@@ -143,6 +144,7 @@ void main_menu() {
       lv_obj_add_state(storagemenu, LV_STATE_DISABLED);
     }
     subMenu(main_menu_obj, "Device Info", &device_info);
+    subMenu(main_menu_obj, "Reset Settings", &reset_settings);
     subMenu(main_menu_obj, "Shutdown", &ShutdownCallback);
     subMenu(main_menu_obj, "Help", &help);
     subMenu(main_menu_obj, "Exit", &exit_callback);

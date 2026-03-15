@@ -22,6 +22,7 @@ SET(SRC "main.cpp"
         "ui/ota.cpp"
         "ui/no_sd.cpp"
         "ui/low_batt.cpp"
+        "ui/reset_settings.cpp"
 )
 
 if (ESP_PLATFORM)
