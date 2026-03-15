@@ -137,7 +137,7 @@ hal::pmic::esp32s3::PmicNpm1300::PmicNpm1300(i2c_master_bus_handle_t i2c, gpio_n
   i2c_device_config_t dev_cfg = {
     .dev_addr_length = I2C_ADDR_BIT_LEN_7,
     .device_address = 0x6b,
-    .scl_speed_hz = 100000,
+    .scl_speed_hz = 400000,
   };
   ESP_ERROR_CHECK(i2c_master_bus_add_device(i2c, &dev_cfg, &i2c_handle));
   _npmx_backend = {npmx_write, npmx_read, i2c_handle};
@@ -575,10 +575,11 @@ void hal::pmic::esp32s3::PmicNpm1300Gpio::GpioConfig(gpio::GpioDirection directi
   npmx_gpio_config_set(npmx_gpio_get(_npmx_instance, _index), &_config);
 }
 
-bool hal::pmic::esp32s3::PmicNpm1300Gpio::GpioRead() {
+hal::gpio::GpioState hal::pmic::esp32s3::PmicNpm1300Gpio::GpioRead() {
   bool state;
-  npmx_gpio_status_check(npmx_gpio_get(_npmx_instance, _index), &state);
-  return state;
+  if (npmx_gpio_status_check(npmx_gpio_get(_npmx_instance, _index), &state) != NPMX_SUCCESS)
+    return gpio::GpioState::INVALID;
+  return state?gpio::GpioState::HIGH:gpio::GpioState::LOW;
 }
 
 void hal::pmic::esp32s3::PmicNpm1300Gpio::GpioWrite(bool b) {
@@ -628,10 +629,11 @@ void hal::pmic::esp32s3::PmicNpm1300Gpio::GpioInt(hal::gpio::GpioIntDirection di
 void hal::pmic::esp32s3::PmicNpm1300ShpHld::GpioConfig(gpio::GpioDirection direction, gpio::GpioPullMode pull) {
 
 }
-bool hal::pmic::esp32s3::PmicNpm1300ShpHld::GpioRead() {
+hal::gpio::GpioState hal::pmic::esp32s3::PmicNpm1300ShpHld::GpioRead() {
   bool state;
-  npmx_ship_gpio_status_check(npmx_ship_get(_npmx_instance, 0), &state);
-  return !state;
+  if (npmx_ship_gpio_status_check(npmx_ship_get(_npmx_instance, 0), &state) != NPMX_SUCCESS)
+    return gpio::GpioState::INVALID;
+  return (!state)?gpio::GpioState::HIGH:gpio::GpioState::LOW;
 }
 void hal::pmic::esp32s3::PmicNpm1300ShpHld::GpioWrite(bool b) {
 
@@ -649,8 +651,8 @@ void hal::pmic::esp32s3::PmicNpm1300Led::GpioConfig(gpio::GpioDirection directio
  * Always returns false, as LED does not support input
  * @return false
  */
-bool hal::pmic::esp32s3::PmicNpm1300Led::GpioRead() {
-  return false;
+hal::gpio::GpioState hal::pmic::esp32s3::PmicNpm1300Led::GpioRead() {
+  return gpio::GpioState::INVALID;
 }
 
 /***

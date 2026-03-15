@@ -28,7 +28,7 @@ class PmicNpm1300Gpio final : public gpio::Gpio {
   PmicNpm1300Gpio(npmx_instance_t *npmx, uint8_t index);
   ~PmicNpm1300Gpio() = default;
   void GpioConfig(gpio::GpioDirection direction, gpio::GpioPullMode pull) override;
-  bool GpioRead() override;
+  gpio::GpioState GpioRead() override;
   void GpioWrite(bool b) override;
   void EnableIrq(bool b);
   void GpioInt(hal::gpio::GpioIntDirection dir, void (*callback)()) override;
@@ -51,7 +51,7 @@ class PmicNpm1300ShpHld : public gpio::Gpio {
  public:
   explicit PmicNpm1300ShpHld(npmx_instance_t *npmx);
   void GpioConfig(gpio::GpioDirection direction, gpio::GpioPullMode pull) override;
-  bool GpioRead() override;
+  gpio::GpioState GpioRead() override;
   void GpioWrite(bool b) override;
 
  private:
@@ -62,7 +62,7 @@ class PmicNpm1300Led : public gpio::Gpio {
  public:
   PmicNpm1300Led(npmx_instance_t *npmx, uint8_t index);
   void GpioConfig(gpio::GpioDirection direction, gpio::GpioPullMode pull) override;
-  bool GpioRead() override;
+  gpio::GpioState GpioRead() override;
   void GpioWrite(bool b) override;
   void ChargingIndicator(bool b);
 

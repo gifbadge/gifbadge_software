@@ -23,7 +23,7 @@
 static const char *TAG = "Board::esp32::s3::full::v0_6";
 
 static bool checkSdState(hal::gpio::Gpio *gpio) {
-  return !gpio->GpioRead();
+  return gpio->GpioRead() == hal::gpio::GpioState::LOW;
 }
 
 namespace Boards {

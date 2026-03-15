@@ -46,10 +46,12 @@ void hal::keys::esp32s3::KeysGeneric::poll() {
 
   for (int b = 0; b < hal::keys::KEY_MAX; b++) {
     if (_keys[b] != nullptr) {
-      bool state = _keys[b]->GpioRead();
-      zmk_debounce_update(&_debounce_states[b], state == 0, static_cast<int>(time - last), &_debounce_config);
-      if (zmk_debounce_get_changed(&_debounce_states[b])) {
-        LOGI(TAG, "%i changed", b);
+      gpio::GpioState state = _keys[b]->GpioRead();
+      if (state != gpio::GpioState::INVALID) {
+        zmk_debounce_update(&_debounce_states[b], state == gpio::GpioState::LOW, static_cast<int>(time - last), &_debounce_config);
+        if (zmk_debounce_get_changed(&_debounce_states[b])) {
+          LOGI(TAG, "%i changed", b);
+        }
       }
     }
   }

@@ -79,8 +79,12 @@ esp_err_t esp_io_expander_new_gpio(hal::gpio::Gpio *gpio, esp_io_expander_handle
 static esp_err_t read_input_reg(esp_io_expander_handle_t handle, uint32_t *value)
 {
   auto *tca = (esp_io_expander_gpio_t *)__containerof(handle, esp_io_expander_gpio_t, base);
-  *value = tca->gpio->GpioRead();
-  return ESP_OK;
+  hal::gpio::GpioState tmp = tca->gpio->GpioRead();
+  if (tmp != hal::gpio::GpioState::INVALID) {
+    *value = tca->gpio->GpioRead() == hal::gpio::GpioState::HIGH ? 1 : 0;
+    return ESP_OK;
+  }
+  return ESP_ERR_INVALID_STATE;
 }
 
 static esp_err_t write_output_reg(esp_io_expander_handle_t handle, uint32_t value)
