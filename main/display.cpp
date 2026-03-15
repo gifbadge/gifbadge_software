@@ -491,6 +491,9 @@ void display_task(void *params) {
             if (is_file(card_path)) {
               in.reset(openFile(card_path, display));
               slideShowStop();
+            } else {
+              in.reset();
+              in = std::make_unique<image::ErrorImage>(display->size, "Card 1 not set");
             }
             break;
           case DISPLAY_SPECIAL_2:
@@ -499,6 +502,9 @@ void display_task(void *params) {
             if (is_file(card_path)) {
               in.reset(openFile(card_path, display));
               slideShowStop();
+            } else {
+              in.reset();
+              in = std::make_unique<image::ErrorImage>(display->size, "Card 2 not set");
             }
             break;
           case DISPLAY_NOTIFY_CHANGE:
