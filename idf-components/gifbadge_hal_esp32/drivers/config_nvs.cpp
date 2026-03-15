@@ -97,7 +97,7 @@ void hal::config::esp32s3::Config_NVS::save() {
 void hal::config::esp32s3::Config_NVS::getCard(cards card, char *path) {
   char card_str[8];
   snprintf(card_str, sizeof(card_str), "card_%0d", static_cast<int>(card));
-  get_string_or_default(card_str, "/data", path, 128);
+  get_string_or_default(card_str, "", path, 128);
 }
 void hal::config::esp32s3::Config_NVS::setCard(cards card, const char *path) {
   char card_str[8];
