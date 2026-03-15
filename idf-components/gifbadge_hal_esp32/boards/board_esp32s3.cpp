@@ -28,7 +28,7 @@ static const char *TAG = "esp32::s3::esp32s3";
 namespace Boards::esp32::s3 {
 esp32s3::esp32s3() {
   esp_pm_lock_create(ESP_PM_CPU_FREQ_MAX, 0, "Board Lock", &pmLockHandle);
-  _config = new hal::config::esp32s3::Config_NVS();
+  _config = new hal::config::esp32s3::Config_NVS(this);
 }
 void esp32s3::Reset() {
   esp_restart();

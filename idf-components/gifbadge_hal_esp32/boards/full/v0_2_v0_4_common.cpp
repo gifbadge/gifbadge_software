@@ -95,7 +95,7 @@ void vbusISR(void *) {
 
 void esp32::s3::full::v0_2v0_4::LateInit() {
  buffer = heap_caps_malloc(480 * 480 + 0x6100, MALLOC_CAP_INTERNAL);
-  _config = new hal::config::esp32s3::Config_NVS();
+  _config = new hal::config::esp32s3::Config_NVS(this);
   i2c_master_bus_config_t i2c_mst_config = {
     .i2c_port = I2C_NUM_0,
     .sda_io_num = GPIO_NUM_47,

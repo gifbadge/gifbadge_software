@@ -35,6 +35,7 @@ class Config {
   virtual void reload() = 0;
   virtual void getCard(cards, char *path) = 0;
   virtual void setCard(cards, const char *path) = 0;
+  virtual void format() {}
 
 };
 }

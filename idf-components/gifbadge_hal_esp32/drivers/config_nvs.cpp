@@ -8,7 +8,7 @@
 #include "log.h"
 #include "drivers/config_nvs.h"
 
-hal::config::esp32s3::Config_NVS::Config_NVS() {
+hal::config::esp32s3::Config_NVS::Config_NVS(Boards::Board *board): _board(board) {
   esp_err_t err;
   err = nvs_flash_init();
   if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
@@ -102,4 +102,9 @@ void hal::config::esp32s3::Config_NVS::setCard(cards card, const char *path) {
   char card_str[8];
   snprintf(card_str, sizeof(card_str), "card_%0d", static_cast<int>(card));
   handle->set_string(card_str, path);
+}
+
+void hal::config::esp32s3::Config_NVS::format() {
+  nvs_flash_erase();
+  _board->Reset();
 }

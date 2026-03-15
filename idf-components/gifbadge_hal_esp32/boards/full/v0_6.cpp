@@ -29,7 +29,7 @@ static bool checkSdState(hal::gpio::Gpio *gpio) {
 namespace Boards {
 
 esp32::s3::full::v0_6::v0_6() {
-  _config = new hal::config::esp32s3::Config_NVS();
+  _config = new hal::config::esp32s3::Config_NVS(this);
   gpio_install_isr_service(0);
 
   i2c_master_bus_config_t i2c_mst_config = {

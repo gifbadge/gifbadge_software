@@ -7,12 +7,16 @@
 #pragma once
 #include <memory>
 #include <nvs_handle.hpp>
+
+#include "hal/board.h"
 #include "hal/config_storage.h"
 
 namespace hal::config::esp32s3 {
 class Config_NVS: public Config {
  public:
-  Config_NVS();
+  void format() override;
+
+  Config_NVS(Boards::Board *board);
   ~Config_NVS() override = default;
 
   void setPath(const char *) override;
@@ -36,6 +40,7 @@ class Config_NVS: public Config {
   template<typename T>
   T get_item_or_default(const char *key, T value);
   void get_string_or_default(const char *item, const char* default_value, char *out, size_t out_len);
+  Boards::Board *_board;
 };
 }
 
