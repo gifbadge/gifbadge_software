@@ -42,6 +42,7 @@ void hal::config::esp32s3::Config_NVS::get_string_or_default(const char *item, c
   if (handle->get_string(item, out, out_len) == ESP_ERR_NVS_NOT_FOUND) {
     handle->set_string(item, default_value);
     handle->commit();
+    strncpy(out, default_value, out_len);
   }
 }
 
