@@ -91,6 +91,7 @@ void hal::config::esp32s3::Config_NVS::reload() {
 
 }
 void hal::config::esp32s3::Config_NVS::save() {
+  handle->commit();
 
 }
 void hal::config::esp32s3::Config_NVS::getCard(cards card, char *path) {
