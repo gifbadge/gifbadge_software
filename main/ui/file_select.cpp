@@ -20,6 +20,7 @@ extern "C" {
 struct file_data {
   char top[255];
   char current[255];
+  bool allow_folder;
 };
 
 static void file_list_chdir(lv_obj_t *parent, const char *path) {
@@ -50,6 +51,8 @@ static void file_event_handler(lv_event_t *e) {
     if (!is_directory(d->current)) {
       dirname(d->current);
     }
+    lv_obj_del(container);
+  } else if (strcmp(text, "Exit") == 0) {
     lv_obj_del(container);
   } else {
     if (!is_directory(d->current)) {
@@ -89,7 +92,11 @@ void file_list(lv_obj_t *parent) {
     LV_LOG_USER("Not in Top");
     file_entry(parent, ICON_UP, "Up");
   }
-  file_entry(parent, ICON_FOLDER_OPEN, "Entire Folder");
+  if (d->allow_folder) {
+    file_entry(parent, ICON_FOLDER_OPEN, "Entire Folder");
+  } else if (compare_path(top, current) == 0) {
+    file_entry(parent, ICON_BACK, "Exit");
+  }
 
   LV_LOG_USER("Path: %s", current);
 
@@ -118,7 +125,7 @@ void file_list(lv_obj_t *parent) {
   }
 }
 
-lv_obj_t *file_select(const char *top, const char *current) {
+lv_obj_t *file_select(const char *top, const char *current, bool allow_folder) {
   lv_screen_load(create_screen());
   new_group();
   lv_obj_t *cont_flex = lv_file_list_create(lv_scr_act());
@@ -132,6 +139,7 @@ lv_obj_t *file_select(const char *top, const char *current) {
     strcpy(d->current, current);
   }
   strcpy(d->top, top);
+  d->allow_folder = allow_folder;
 
   lv_file_list_set_user_data(cont_flex, d);
 

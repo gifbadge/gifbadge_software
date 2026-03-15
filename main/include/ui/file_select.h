@@ -14,7 +14,7 @@ extern "C"
 #endif
 
 void file_list(lv_obj_t *parent);
-lv_obj_t *file_select(const char *top, const char *current);
+lv_obj_t *file_select(const char *top, const char *current, bool allow_folder);
 void FileWindowClose(lv_event_t *e);
 
 #ifdef __cplusplus

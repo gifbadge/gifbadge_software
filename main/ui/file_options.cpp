@@ -13,6 +13,7 @@
 #include "ui/menu.h"
 #include "ui/style.h"
 #include "display.h"
+#include "file.h"
 #include "hw_init.h"
 #ifndef ESP_PLATFORM
 #include <unistd.h>
@@ -63,11 +64,15 @@ static void FileOptionsSave(lv_event_t *e) {
 
   path = lv_label_get_text(fields->card_up);
   LOGI(TAG, "Card Up: %s", path);
-  config->setCard(hal::config::UP, path);
+  if (is_file(path)) {
+    config->setCard(hal::config::UP, path);
+  }
 
   path = lv_label_get_text(fields->card_down);
   LOGI(TAG, "Card Down: %s", path);
-  config->setCard(hal::config::DOWN, path);
+  if (is_file(path)) {
+    config->setCard(hal::config::DOWN, path);
+  }
 
   config->save();
 
@@ -82,11 +87,23 @@ static void FileOptionsSave(lv_event_t *e) {
 static void FileOptionsFileSelect(lv_event_t *e) {
   char *current = lv_label_get_text(static_cast<lv_obj_t *>(lv_event_get_target(e)));
 #ifdef ESP_PLATFORM
-  lv_obj_t *file_window = file_select("/data/", current);
+  lv_obj_t *file_window = file_select("/data/", current, true);
 #else
   char path[129];
   getcwd(path, sizeof(path));
-  lv_obj_t *file_window = file_select("/data/", current);
+  lv_obj_t *file_window = file_select("/data/", current, false);
+#endif
+  lv_obj_add_event_cb(file_window, FileWindowClose, LV_EVENT_DELETE, lv_event_get_target(e));
+}
+
+static void FileOptionsCardSelect(lv_event_t *e) {
+  char *current = lv_label_get_text(static_cast<lv_obj_t *>(lv_event_get_target(e)));
+#ifdef ESP_PLATFORM
+  lv_obj_t *file_window = file_select("/data/", current, false);
+#else
+  char path[129];
+  getcwd(path, sizeof(path));
+  lv_obj_t *file_window = file_select("/data/", current, false);
 #endif
   lv_obj_add_event_cb(file_window, FileWindowClose, LV_EVENT_DELETE, lv_event_get_target(e));
 }
@@ -256,8 +273,8 @@ lv_obj_t *FileOptions() {
 
     //Callbacks
     lv_obj_add_event_cb(file_label, FileOptionsFileSelect, LV_EVENT_CLICKED, nullptr);
-    lv_obj_add_event_cb(card_up_label, FileOptionsFileSelect, LV_EVENT_CLICKED,nullptr);
-    lv_obj_add_event_cb(card_down_label, FileOptionsFileSelect, LV_EVENT_CLICKED, nullptr);
+    lv_obj_add_event_cb(card_up_label, FileOptionsCardSelect, LV_EVENT_CLICKED,nullptr);
+    lv_obj_add_event_cb(card_down_label, FileOptionsCardSelect, LV_EVENT_CLICKED, nullptr);
 
 
 
