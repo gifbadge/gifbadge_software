@@ -88,7 +88,6 @@ static void cc_set_current(npmx_instance_t *pm) {
   npmx_vbusin_cc_status_get(npmx_vbusin_get(pm, 0), &cc1, &cc2);
   npmx_vbusin_cc_t selected = cc1 >= cc2 ? cc1 : cc2;
   LOGI(TAG, "USB power detected %s", npmx_vbusin_cc_status_map_to_string(selected));
-  npmx_vbusin_cc_status_get(npmx_vbusin_get(pm, 0), &cc1, &cc2);
   if (selected >= 2) {
     npmx_vbusin_current_limit_set(npmx_vbusin_get(pm, 0), NPMX_VBUSIN_CURRENT_1000_MA);
   } else {
