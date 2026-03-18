@@ -389,10 +389,6 @@ void hal::pmic::esp32s3::PmicNpm1300::Init() {
                                        NPMX_EVENT_GROUP_USB_CC2_MASK);
   npmx_core_register_cb(&_npmx_instance, vbus_thermal, NPMX_CALLBACK_TYPE_EVENT_VBUSIN_THERMAL_USB);
 
-  npmx_core_event_interrupt_enable(&_npmx_instance, NPMX_EVENT_GROUP_BAT_CHAR_STATUS,
-                                   NPMX_EVENT_GROUP_CHARGER_COMPLETED_MASK |
-                                       NPMX_EVENT_GROUP_CHARGER_ERROR_MASK);
-
   npmx_core_register_cb(&_npmx_instance, GpioHandler, NPMX_CALLBACK_TYPE_EVENT_EVENTSGPIOSET);
 
 }
