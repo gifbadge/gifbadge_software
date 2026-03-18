@@ -9,7 +9,6 @@
 #include "log.h"
 #include "npmx_core.h"
 #include <esp_timer.h>
-#include <soc/gpio_sig_map.h>
 #include <cmath>
 #include <driver/i2c_master.h>
 
@@ -62,7 +61,7 @@ npmx_error_t npmx_read(void *p_context, uint32_t register_address, uint8_t *p_da
 
 void hal::pmic::esp32s3::PmicNpm1300::VbusVoltage(npmx_instance_t *pm, npmx_callback_type_t, uint8_t mask) {
   if (mask & (NPMX_EVENT_GROUP_VBUSIN_DETECTED_MASK | NPMX_EVENT_GROUP_VBUSIN_REMOVED_MASK)) {
-    auto *pmic = static_cast<hal::pmic::esp32s3::PmicNpm1300 *>(npmx_core_context_get(pm));
+    auto *pmic = static_cast<PmicNpm1300 *>(npmx_core_context_get(pm));
     if (mask & NPMX_EVENT_GROUP_VBUSIN_DETECTED_MASK) {
       LOGI(TAG, "VBUS CONNECTED");
       if(pmic->_vbus_callback){
@@ -86,9 +85,8 @@ void hal::pmic::esp32s3::PmicNpm1300::VbusVoltage(npmx_instance_t *pm, npmx_call
 static void cc_set_current(npmx_instance_t *pm) {
   npmx_vbusin_cc_t cc1;
   npmx_vbusin_cc_t cc2;
-  npmx_vbusin_cc_t selected;
   npmx_vbusin_cc_status_get(npmx_vbusin_get(pm, 0), &cc1, &cc2);
-  selected = cc1 >= cc2 ? cc1 : cc2;
+  npmx_vbusin_cc_t selected = cc1 >= cc2 ? cc1 : cc2;
   LOGI(TAG, "USB power detected %s", npmx_vbusin_cc_status_map_to_string(selected));
   npmx_vbusin_cc_status_get(npmx_vbusin_get(pm, 0), &cc1, &cc2);
   if (selected >= 2) {
@@ -138,6 +136,8 @@ hal::pmic::esp32s3::PmicNpm1300::PmicNpm1300(i2c_master_bus_handle_t i2c, gpio_n
     .dev_addr_length = I2C_ADDR_BIT_LEN_7,
     .device_address = 0x6b,
     .scl_speed_hz = 400000,
+    .scl_wait_us = 0, //0 means use default value
+    .flags =  {}
   };
   ESP_ERROR_CHECK(i2c_master_bus_add_device(i2c, &dev_cfg, &i2c_handle));
   _npmx_backend = {npmx_write, npmx_read, i2c_handle};
@@ -158,20 +158,13 @@ double hal::pmic::esp32s3::PmicNpm1300::BatteryVoltage() {
   return _vbat/1000.00;
 }
 
-static inline uint8_t sigmoidal(uint16_t voltage, uint16_t minVoltage, uint16_t maxVoltage) {
-  auto result =
-      static_cast<uint8_t>(105 - (105 / (1 + pow(1.724 * (voltage - minVoltage) / (maxVoltage - minVoltage), 5.5))));
-  return result >= 100 ? 100 : result;
-}
-
-static inline uint8_t asigmoidal(uint16_t voltage, uint16_t minVoltage = 2800, uint16_t maxVoltage = 4200) {
+static uint8_t asigmoidal(uint16_t voltage, uint16_t minVoltage = 2800, uint16_t maxVoltage = 4200) {
   if(voltage < minVoltage){
     return 0;
   }
   if(voltage > maxVoltage){
     return 100;
   }
-//  uint8_t result = 101 - (101 / pow(1 + pow(1.33 * (voltage - minVoltage)/(maxVoltage - minVoltage) ,4.5), 3));
   uint8_t result = 100 - (100 / pow(1 + pow(1.6 * (voltage - minVoltage)/(maxVoltage - minVoltage) ,5.5), 1.2));
   return result >= 100 ? 100 : result;
 }
@@ -290,34 +283,34 @@ uint16_t hal::pmic::esp32s3::PmicNpm1300::ChargeVtermGet() {
 }
 
 hal::charger::Charger::ChargeStatus hal::pmic::esp32s3::PmicNpm1300::ChargeStatusGet() {
-  if (_charge_error != Charger::ChargeError::NONE) {
-    return Charger::ChargeStatus::ERROR;
+  if (_charge_error != ChargeError::NONE) {
+    return ChargeStatus::ERROR;
   }
   uint8_t status_mask;
   npmx_charger_status_get(npmx_charger_get(&_npmx_instance, 0), &status_mask);
   LOGI(TAG, "Charger status mask %u", status_mask);
 //  if (NPMX_CHARGER_STATUS_SUPPLEMENT_ACTIVE_MASK & status_mask) {
-//    return Charger::ChargeStatus::SUPPLEMENTACTIVE;
+//    return ChargeStatus::SUPPLEMENTACTIVE;
 //  }
   if (NPMX_CHARGER_STATUS_TRICKLE_CHARGE_MASK & status_mask) {
-    return Charger::ChargeStatus::TRICKLECHARGE;
+    return ChargeStatus::TRICKLECHARGE;
   }
   if (NPMX_CHARGER_STATUS_CONSTANT_CURRENT_MASK & status_mask) {
-    return Charger::ChargeStatus::CONSTANTCURRENT;
+    return ChargeStatus::CONSTANTCURRENT;
   }
   if (NPMX_CHARGER_STATUS_CONSTANT_VOLTAGE_MASK & status_mask) {
-    return Charger::ChargeStatus::CONSTANTVOLTAGE;
+    return ChargeStatus::CONSTANTVOLTAGE;
   }
   if (NPMX_CHARGER_STATUS_RECHARGE_MASK & status_mask) {
-    return Charger::ChargeStatus::CONSTANTVOLTAGE;
+    return ChargeStatus::CONSTANTVOLTAGE;
   }
   if (NPMX_CHARGER_STATUS_DIE_TEMP_HIGH_MASK & status_mask) {
-    return Charger::ChargeStatus::PAUSED;
+    return ChargeStatus::PAUSED;
   }
   if (NPMX_CHARGER_STATUS_COMPLETED_MASK & status_mask) {
-    return Charger::ChargeStatus::COMPLETED;
+    return ChargeStatus::COMPLETED;
   }
-  return Charger::ChargeStatus::NONE;
+  return ChargeStatus::NONE;
 }
 hal::charger::Charger::ChargeError hal::pmic::esp32s3::PmicNpm1300::ChargeErrorGet() {
   return _charge_error;
@@ -381,9 +374,7 @@ void hal::pmic::esp32s3::PmicNpm1300::Init() {
   npmx_core_register_cb(&_npmx_instance, VbusVoltage, NPMX_CALLBACK_TYPE_EVENT_VBUSIN_VOLTAGE);
   npmx_core_event_interrupt_enable(&_npmx_instance, NPMX_EVENT_GROUP_SHIPHOLD,
                                    NPMX_EVENT_GROUP_SHIPHOLD_PRESSED_MASK);
-//  npmx_core_event_interrupt_enable(&_npmx_instance, NPMX_EVENT_GROUP_BAT_CHAR_BAT,
-//                                   NPMX_EVENT_GROUP_BATTERY_DETECTED_MASK |
-//                                       NPMX_EVENT_GROUP_BATTERY_REMOVED_MASK);
+
   npmx_core_event_interrupt_enable(&_npmx_instance, NPMX_EVENT_GROUP_VBUSIN_THERMAL,
                                    NPMX_EVENT_GROUP_USB_CC1_MASK |
                                        NPMX_EVENT_GROUP_USB_CC2_MASK);
@@ -405,7 +396,7 @@ void hal::pmic::esp32s3::PmicNpm1300::DisableGpioEvent(uint8_t index) {
 
 
 void hal::pmic::esp32s3::PmicNpm1300::GpioHandler(npmx_instance_t *pm, npmx_callback_type_t, uint8_t mask) {
-  auto *pmic = static_cast<hal::pmic::esp32s3::PmicNpm1300 *>(npmx_core_context_get(pm));
+  auto *pmic = static_cast<PmicNpm1300 *>(npmx_core_context_get(pm));
   for(int x = 0; x< 5; x++){
     if(mask & (1 << x)){
       LOGI(TAG, "GPIO %u", x);
@@ -429,16 +420,12 @@ uint16_t hal::pmic::esp32s3::PmicNpm1300::VbusMaxCurrentGet() {
   switch(cc1 >= cc2 ? cc1 : cc2){
     case NPMX_VBUSIN_CC_NOT_CONNECTED:
       return 0;
-      break;
     case NPMX_VBUSIN_CC_DEFAULT:
       return 500;
-      break;
     case NPMX_VBUSIN_CC_HIGH_POWER_1A5:
       return 1500;
-      break;
     case NPMX_VBUSIN_CC_HIGH_POWER_3A0:
       return 3000;
-      break;
     default:
       return 0;
   }
@@ -484,7 +471,7 @@ void hal::pmic::esp32s3::PmicNpm1300::EnableADC() {
 }
 
 void hal::pmic::esp32s3::PmicNpm1300::ADCTimerHandler(void *arg) {
-  auto pmic = static_cast<hal::pmic::esp32s3::PmicNpm1300 *>(arg);
+  auto pmic = static_cast<PmicNpm1300 *>(arg);
   npmx_adc_meas_all_t meas;
   if (npmx_adc_meas_all_get(npmx_adc_get(&pmic->_npmx_instance, 0), &meas) != NPMX_SUCCESS) {
     LOGI(TAG, "Reading ADC measurements failed.");
@@ -596,7 +583,7 @@ void hal::pmic::esp32s3::PmicNpm1300Gpio::EnableIrq(bool b) {
                      b ? NPMX_GPIO_MODE_OUTPUT_IRQ : NPMX_GPIO_MODE_INPUT);
 
 }
-void hal::pmic::esp32s3::PmicNpm1300Gpio::GpioInt(hal::gpio::GpioIntDirection dir, void (*callback)()) {
+void hal::pmic::esp32s3::PmicNpm1300Gpio::GpioInt(gpio::GpioIntDirection dir, void (*callback)()) {
   _callback = callback;
   _int_direction = dir;
   npmx_gpio_mode_t set_dir = NPMX_GPIO_MODE_INPUT;
@@ -612,7 +599,7 @@ void hal::pmic::esp32s3::PmicNpm1300Gpio::GpioInt(hal::gpio::GpioIntDirection di
       break;
   }
   npmx_gpio_mode_set(npmx_gpio_get(_npmx_instance, _index), set_dir);
-  auto pmic = static_cast<hal::pmic::esp32s3::PmicNpm1300 *>(npmx_core_context_get(_npmx_instance));
+  auto pmic = static_cast<PmicNpm1300 *>(npmx_core_context_get(_npmx_instance));
   if(dir != gpio::GpioIntDirection::NONE){
     pmic->EnableGpioEvent(_index);
   }
