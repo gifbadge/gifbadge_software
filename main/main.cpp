@@ -98,7 +98,9 @@ static void initLowBatteryTask() {
   xTimerStart(xTimerCreate("low_battery_handler", 10000/portTICK_PERIOD_MS, pdTRUE, nullptr, lowBatteryTask),0);
 }
 
-#ifdef ESP_PLATFORM
+#if defined(ESP_PLATFORM)
+#include <sdkconfig.h>
+#if CONFIG_TINYUSB_MSC_ENABLED
 static void usbCall(tinyusb_msc_storage_handle_t handle, tinyusb_msc_event_t *e, void *arg){
   LOGI(TAG, "USB Event %d", e->id);
   if (e->id != TINYUSB_MSC_EVENT_MOUNT_COMPLETE) {
@@ -120,6 +122,7 @@ static void usbCall(tinyusb_msc_storage_handle_t handle, tinyusb_msc_event_t *e,
     }
   }
 }
+#endif
 #endif
 
 
@@ -182,7 +185,7 @@ extern "C" void app_main(void) {
     return;
   }
 
-#ifdef ESP_PLATFORM
+#if defined(ESP_PLATFORM) && defined(CONFIG_TINYUSB_MSC_ENABLED)
   board->UsbCallBack(&usbCall);
 #endif
 

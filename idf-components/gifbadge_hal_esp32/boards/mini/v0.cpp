@@ -138,13 +138,14 @@ void esp32::s3::mini::v0::LateInit() {
   const esp_partition_t *fat_partition = int_ext_flash_hw(39, 41, 40, 42);
   ESP_ERROR_CHECK(wl_mount(fat_partition, &wl_handle));
 
+#if !CONFIG_TINYUSB_MSC_ENABLED
   const esp_vfs_fat_mount_config_t mount_config = {
       .format_if_mount_failed = true,
       .max_files = 4,
       .allocation_unit_size = CONFIG_WL_SECTOR_SIZE,
   };
-  // ESP_ERROR_CHECK(esp_vfs_fat_spiflash_mount_rw_wl("/data", "ext_data", &mount_config, &wl_handle));
-
+  ESP_ERROR_CHECK(esp_vfs_fat_spiflash_mount_rw_wl("/data", "ext_data", &mount_config, &wl_handle));
+#else
   const tinyusb_msc_storage_config_t
       config_spi = {
         .medium = {wl_handle}, .fat_fs = {
@@ -159,7 +160,7 @@ void esp32::s3::mini::v0::LateInit() {
       };
 
   ESP_ERROR_CHECK(tinyusb_msc_new_storage_spiflash(&config_spi, &storage_handle));
-
+#endif
   esp32s3_usb_init(GPIO_NUM_NC);
 #if CFG_TUD_CDC
   tinyusb_console_init(TINYUSB_CDC_ACM_0);
@@ -170,7 +171,7 @@ void esp32::s3::mini::v0::LateInit() {
 }
 
 bool esp32::s3::mini::v0::UsbConnected() {
-#ifndef USB_DISABLED
+#if CONFIG_TINYUSB_MSC_ENABLED
   tinyusb_msc_mount_point_t mount_status;
   tinyusb_msc_get_storage_mount_point(storage_handle, &mount_status);
   return mount_status == TINYUSB_MSC_STORAGE_MOUNT_USB;
@@ -179,7 +180,9 @@ bool esp32::s3::mini::v0::UsbConnected() {
 #endif
 }
 int esp32::s3::mini::v0::UsbCallBack(tusb_msc_callback_t callback) {
+#if CONFIG_TINYUSB_MSC_ENABLED
   tinyusb_msc_set_storage_callback(callback, nullptr);
+#endif
   return 0;
 }
 
