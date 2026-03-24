@@ -137,7 +137,7 @@ static inline bool esp_secure_boot_enabled(void)
  * If first boot gets interrupted after calling this function
  * but before esp_secure_boot_permanently_enable() is called, then
  * the key burned on EFUSE will not be regenerated, unless manually
- * done using espefuse.py tool
+ * done using espefuse tool
  *
  * @return ESP_OK if secure boot digest is generated
  * successfully or found to be already present
@@ -231,7 +231,7 @@ typedef struct {
  *
  * @return Size of the secure boot signature block in bytes
  */
-static inline uint32_t esp_secure_boot_sig_block_size(void)
+static inline uint32_t esp_secure_boot_sig_block_size()
 {
 #if CONFIG_SECURE_SIGNED_APPS_RSA_SCHEME || CONFIG_SECURE_SIGNED_APPS_ECDSA_V2_SCHEME
     return sizeof(ets_secure_boot_signature_t);
@@ -286,15 +286,6 @@ typedef struct {
 
 #endif // !CONFIG_IDF_TARGET_ESP32 || CONFIG_ESP32_REV_MIN_FULL >= 300
 
-/** @brief Legacy ECDSA verification function
- *
- * @note Deprecated, call either esp_secure_boot_verify_ecdsa_signature_block() or esp_secure_boot_verify_rsa_signature_block() instead.
- *
- * @param sig_block Pointer to ECDSA signature block data
- * @param image_digest Pointer to 32 byte buffer holding SHA-256 hash.
- */
-esp_err_t esp_secure_boot_verify_signature_block(const esp_secure_boot_sig_block_t *sig_block, const uint8_t *image_digest)
-    __attribute__((deprecated("use esp_secure_boot_verify_ecdsa_signature_block instead")));
 
 
 #define FLASH_OFFS_SECURE_BOOT_IV_DIGEST 0
