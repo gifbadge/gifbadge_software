@@ -515,6 +515,7 @@ void display_task(void *params) {
             continue;
           case DISPLAY_NOTIFY_USB:
             LOGD(TAG, "DISPLAY_NOTIFY_USB");
+            slideShowStop();
             delay = -1;
             closedir_sorted(&dir);
             dir.dirptr = nullptr;
@@ -531,6 +532,7 @@ void display_task(void *params) {
           case DISPLAY_MENU:
             delay = -1;
             LOGD("TAG", "Display menu");
+            slideShowStop();
             xTaskNotifyIndexed(lvglTask, 0, 0, eSetValueWithOverwrite);
             continue;
           default:
