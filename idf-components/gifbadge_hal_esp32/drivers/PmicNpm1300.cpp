@@ -40,7 +40,7 @@ npmx_error_t npmx_write(void *p_context, uint32_t register_address, uint8_t *p_d
   if (ret == ESP_OK) {
     return NPMX_SUCCESS;
   }
-  LOGE(TAG, "npmx_write failed: 0x%x", ret);
+  LOGE(TAG, "npmx_write failed: 0x%x %s", ret, esp_err_to_name(ret));
   return NPMX_ERROR_IO;
 }
 
@@ -54,7 +54,7 @@ npmx_error_t npmx_read(void *p_context, uint32_t register_address, uint8_t *p_da
     return NPMX_SUCCESS;
   }
   else if (ret != ESP_ERR_INVALID_RESPONSE) {
-    LOGE(TAG, "npmx_read failed: 0x%x", ret);
+    LOGE(TAG, "npmx_read failed: 0x%x %s", ret, esp_err_to_name(ret));
   }
   return NPMX_ERROR_IO;
 }
