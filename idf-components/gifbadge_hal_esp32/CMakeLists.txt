@@ -50,6 +50,7 @@ if (ESP_PLATFORM)
             esp_driver_ledc
             esp_driver_spi
             esp_driver_sdmmc
+            spi_flash
     )
     target_link_libraries(${COMPONENT_LIB} PUBLIC "-u custom_app_desc")
     target_link_libraries(${COMPONENT_LIB} PRIVATE gifbadge_hal npmx)

@@ -13,6 +13,7 @@
 
 #include "boards/mini/v0.h"
 
+#include <esp_flash.h>
 #include <esp_flash_spi_init.h>
 #include <log.h>
 #include <tinyusb.h>
@@ -111,20 +112,18 @@ static const esp_partition_t* int_ext_flash_hw(int mosi, int miso, int sclk, int
 
   // Print out the ID and size
   uint32_t id;
+  uint32_t flash_size;
   ESP_ERROR_CHECK(esp_flash_read_id(ext_flash, &id));
-  LOGI(TAG, "Initialized external Flash, size=%" PRIu32 " KB, ID=0x%" PRIx32, ext_flash->size / 1024, id);
-  uint32_t size;
-  esp_flash_get_physical_size(ext_flash, &size);
-  LOGI(TAG, "Flash Size %" PRIu32 " KB", size);
-
+  ESP_ERROR_CHECK(esp_flash_get_size(ext_flash, &flash_size));
+  LOGI(TAG, "Initialized external Flash, size=%" PRIu32 " KB, ID=0x%" PRIx32, flash_size / 1024, id);
   LOGI(TAG,
            "Adding external Flash as a partition, label=\"%s\", size=%" PRIu32 " KB",
            "ext_data",
-           ext_flash->size / 1024);
+           flash_size / 1024);
   const esp_partition_t *fat_partition;
   ESP_ERROR_CHECK(esp_partition_register_external(ext_flash,
                                                   0,
-                                                  ext_flash->size,
+                                                  flash_size,
                                                   "ext_data",
                                                   ESP_PARTITION_TYPE_DATA,
                                                   ESP_PARTITION_SUBTYPE_DATA_FAT,
