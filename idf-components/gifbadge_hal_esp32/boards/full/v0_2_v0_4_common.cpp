@@ -102,7 +102,9 @@ void esp32::s3::full::v0_2v0_4::LateInit() {
     .scl_io_num = GPIO_NUM_48,
     .clk_source = I2C_CLK_SRC_RC_FAST,
     .glitch_ignore_cnt = 7,
-    .flags = {.enable_internal_pullup = false},
+    .intr_priority = 0,
+    .trans_queue_depth = 0,
+    .flags = {.enable_internal_pullup = false, .allow_pd = false},
   };
   ESP_ERROR_CHECK(i2c_new_master_bus(&i2c_mst_config, &bus_handle));
   // _i2c = new I2C(I2C_NUM_0, GPIO_NUM_47, GPIO_NUM_48, 100 * 1000, false);

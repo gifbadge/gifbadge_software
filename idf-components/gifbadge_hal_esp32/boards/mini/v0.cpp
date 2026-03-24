@@ -85,8 +85,15 @@ static const esp_partition_t* int_ext_flash_hw(int mosi, int miso, int sclk, int
   const spi_bus_config_t bus_config =
       {.mosi_io_num = mosi, .miso_io_num = miso, .sclk_io_num = sclk, .quadwp_io_num = -1, .quadhd_io_num = -1, .data4_io_num = -1, .data5_io_num = -1, .data6_io_num = -1, .data7_io_num = -1, .data_io_default_level = false, .max_transfer_sz = SPI_MAX_DMA_LEN, .flags = 0, .isr_cpu_id = ESP_INTR_CPU_AFFINITY_AUTO, .intr_flags = 0,};
 
-  const esp_flash_spi_device_config_t
-      device_config = {.host_id = SPI3_HOST, .cs_io_num = cs, .io_mode = SPI_FLASH_DIO, .input_delay_ns = 0, .cs_id = 0, .freq_mhz = 40};
+  const esp_flash_spi_device_config_t device_config = {
+    .host_id = SPI3_HOST,
+    .cs_io_num = cs,
+    .io_mode = SPI_FLASH_DIO,
+    .input_delay_ns = 0,
+    .cs_id = 0,
+    .freq_mhz = 40,
+    .clock_source = SPI_CLK_SRC_DEFAULT
+  };
 
   LOGI(TAG, "Initializing external SPI Flash");
   LOGI(TAG, "Pin assignments:");
@@ -142,6 +149,8 @@ void esp32::s3::mini::v0::LateInit() {
       .format_if_mount_failed = true,
       .max_files = 4,
       .allocation_unit_size = CONFIG_WL_SECTOR_SIZE,
+      .disk_status_check_enable = true,
+      .use_one_fat = false,
   };
   ESP_ERROR_CHECK(esp_vfs_fat_spiflash_mount_rw_wl("/data", "ext_data", &mount_config, &wl_handle));
 #else

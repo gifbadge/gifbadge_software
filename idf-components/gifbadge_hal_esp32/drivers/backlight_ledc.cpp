@@ -36,7 +36,8 @@ hal::backlight::esp32s3::backlight_ledc::backlight_ledc(gpio_num_t gpio, bool in
       .duty           = 0, // Set duty to 0%
       .hpoint         = 0,
       .sleep_mode     = LEDC_SLEEP_MODE_KEEP_ALIVE,
-      .flags          = {.output_invert = invert}
+      .flags          = {.output_invert = invert},
+      .deconfigure    = false
   };
   ESP_ERROR_CHECK(ledc_channel_config(&ledc_channel));
   ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, static_cast<uint32_t>(256 / (level / 100.00)) - 1);

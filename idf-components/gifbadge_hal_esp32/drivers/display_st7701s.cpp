@@ -139,7 +139,6 @@ hal::display::esp32s3::display_st7701s::display_st7701s(spi_line_config_t line_c
 
   LOGI(TAG, "Install ST7701S panel driver");
   esp_lcd_rgb_panel_config_t rgb_config = {
-//            .clk_src = LCD_CLK_SRC_XTAL,
       .clk_src = LCD_CLK_SRC_DEFAULT,
       .timings = {
           .pclk_hz = 7 * 1000 * 1000,
@@ -160,11 +159,12 @@ hal::display::esp32s3::display_st7701s::display_st7701s(spi_line_config_t line_c
       },
 
       .data_width = 16,
-      // .bits_per_pixel = 16,
+      .in_color_format = LCD_COLOR_FMT_RGB565,
+      .out_color_format = LCD_COLOR_FMT_RGB565,
       .num_fbs = fb_number,
+      .user_fbs = {nullptr},
       .bounce_buffer_size_px = 0, //10*H_RES,
-      // .sram_trans_align = 0,
-      // .psram_trans_align = 64,
+      .dma_burst_size = 64,
       .hsync_gpio_num = static_cast<gpio_num_t>(hsync),
       .vsync_gpio_num = static_cast<gpio_num_t>(vsync),
       .de_gpio_num = static_cast<gpio_num_t>(de),

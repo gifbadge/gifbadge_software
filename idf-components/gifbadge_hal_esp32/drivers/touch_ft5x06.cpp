@@ -16,6 +16,7 @@ hal::touch::esp32s3::touch_ft5x06::touch_ft5x06(i2c_master_bus_handle_t i2c) {
     .dev_addr_length = I2C_ADDR_BIT_LEN_7,
     .device_address = 0x38,
     .scl_speed_hz = 400000,
+    .scl_wait_us = 0,
     .flags = {.disable_ack_check = true},
   };
   ESP_ERROR_CHECK(i2c_master_bus_add_device(i2c, &dev_cfg, &i2c_handle));

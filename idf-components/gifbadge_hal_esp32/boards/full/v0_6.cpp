@@ -38,7 +38,9 @@ esp32::s3::full::v0_6::v0_6() {
     .scl_io_num = GPIO_NUM_48,
     .clk_source = I2C_CLK_SRC_DEFAULT,
     .glitch_ignore_cnt = 7,
-    .flags = {.enable_internal_pullup = false},
+    .intr_priority = 0,
+    .trans_queue_depth = 0,
+    .flags = {.enable_internal_pullup = false, .allow_pd = false},
   };
   ESP_ERROR_CHECK(i2c_new_master_bus(&i2c_mst_config, &bus_handle));
 
