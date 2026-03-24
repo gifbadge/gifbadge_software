@@ -8,6 +8,10 @@
 #include <cstdio>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum
 {
   BMP_RGB = 0,
@@ -46,3 +50,6 @@ int bmp_write_header(BMP* bmp, FILE* fd);
 int bmp_read_header(BMP* bmp, FILE* fd);
 void bmp_write(BMP* bmp, const uint8_t *output, FILE *fp);
 void bmp_read_pdata(const BMP* bmp, uint8_t *output, FILE *fp);
+#ifdef __cplusplus
+}
+#endif
