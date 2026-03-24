@@ -53,7 +53,7 @@ npmx_error_t npmx_read(void *p_context, uint32_t register_address, uint8_t *p_da
   if (ret == ESP_OK) {
     return NPMX_SUCCESS;
   }
-  else if (ret != ESP_ERR_INVALID_STATE) {
+  else if (ret != ESP_ERR_INVALID_RESPONSE) {
     LOGE(TAG, "npmx_read failed: 0x%x", ret);
   }
   return NPMX_ERROR_IO;
