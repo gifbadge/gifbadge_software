@@ -36,7 +36,7 @@ typedef struct {
   } regs;
 } esp_io_expander_gpio_t;
 
-static char *TAG = "esp_io_expander_gpio";
+static const char *TAG = "esp_io_expander_gpio";
 
 static esp_err_t read_input_reg(esp_io_expander_handle_t handle, uint32_t *value);
 static esp_err_t write_output_reg(esp_io_expander_handle_t handle, uint32_t value);
