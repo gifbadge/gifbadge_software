@@ -8,7 +8,6 @@
 
 #include <esp_pm.h>
 #include "log.h"
-#include <driver/sdmmc_defs.h>
 #include <driver/rtc_io.h>
 #include <esp_sleep.h>
 #include <driver/i2c_master.h>

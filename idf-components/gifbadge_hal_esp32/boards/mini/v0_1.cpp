@@ -6,7 +6,6 @@
 
 #include <esp_pm.h>
 #include "log.h"
-#include <driver/sdmmc_defs.h>
 #include <esp_task_wdt.h>
 #include <esp_sleep.h>
 #include "boards/mini/v0_1.h"

@@ -6,7 +6,6 @@
 
 #include "drivers/touch_ft5x06.h"
 
-#include <utility>
 #include <driver/i2c_master.h>
 
 hal::touch::esp32s3::touch_ft5x06::touch_ft5x06(i2c_master_bus_handle_t i2c) {
