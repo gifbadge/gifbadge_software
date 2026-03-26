@@ -6,7 +6,10 @@
 
 #include "drivers/touch_ft5x06.h"
 
+#include <log.h>
 #include <driver/i2c_master.h>
+
+static const char* TAG = "touch_ft5x06";
 
 hal::touch::esp32s3::touch_ft5x06::touch_ft5x06(i2c_master_bus_handle_t i2c) {
   uint8_t out[2];
@@ -16,7 +19,7 @@ hal::touch::esp32s3::touch_ft5x06::touch_ft5x06(i2c_master_bus_handle_t i2c) {
     .device_address = 0x38,
     .scl_speed_hz = 400000,
     .scl_wait_us = 0,
-    .flags = {.disable_ack_check = true},
+    .flags = {.disable_ack_check = false},
   };
   ESP_ERROR_CHECK(i2c_master_bus_add_device(i2c, &dev_cfg, &i2c_handle));
 
@@ -71,7 +74,7 @@ hal::touch::touch_data hal::touch::esp32s3::touch_ft5x06::read() {
   uint8_t data_out = FT5x06_TOUCH_POINTS;
   esp_err_t ret = i2c_master_transmit_receive(i2c_handle, &data_out, 1, &data_in, 1, 10);
   if (ret == ESP_OK) {
-    if ((data_in & 0x0f) > 0 && (data_in & 0x0f) < 5) {
+    if (uint8_t points = data_in&0x0f; points > 0 && points < 5) {
       uint8_t tmp[4] = {0};
       data_out = FT5x06_TOUCH1_XH;
       i2c_master_transmit_receive(i2c_handle, &data_out, 1, tmp, 4, 100);
