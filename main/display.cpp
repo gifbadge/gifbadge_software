@@ -284,6 +284,12 @@ int save_cache(const char *path, const char *cache_path, const uint8_t *buffer) 
 #else
   auto *_jpeg = static_cast<JPEGE_IMAGE *>(malloc(sizeof (JPEGE_IMAGE)));
 #endif
+  char cache_dir[64] = "";
+  strcpy(cache_dir, get_board()->GetStoragePath());
+  strcat(cache_dir, "/.cache/");
+  if (!is_directory(cache_dir)) {
+    mkdir(cache_dir, S_IRWXU);
+  }
   JPEGENCODE jpe;
   memset(_jpeg, 0, sizeof(JPEGE_IMAGE));
   _jpeg->pfnRead = jpeg_read;
@@ -295,17 +301,20 @@ int save_cache(const char *path, const char *cache_path, const uint8_t *buffer) 
     return 1;
   }
   const int iWidth = get_board()->GetDisplay()->size.first, iHeight = get_board()->GetDisplay()->size.second;
-  if (JPEGEncodeBegin(_jpeg, &jpe, iWidth , iHeight, JPEGE_PIXEL_RGB565, JPEGE_SUBSAMPLE_444, JPEGE_Q_BEST) != JPEGE_SUCCESS) {
+  if (int ret = JPEGEncodeBegin(_jpeg, &jpe, iWidth , iHeight, JPEGE_PIXEL_RGB565, JPEGE_SUBSAMPLE_444, JPEGE_Q_BEST); ret != JPEGE_SUCCESS) {
+    LOGE(TAG, "JPEGEncodeBegin failed %d", ret);
     fclose(static_cast<FILE *>(_jpeg->JPEGFile.fHandle));
     free(_jpeg);
     return 1;
   }
-  if (JPEGAddFrame(_jpeg, &jpe, const_cast<uint8_t *>(buffer) , iWidth*2) != JPEGE_SUCCESS) {
+  if (int ret = JPEGAddFrame(_jpeg, &jpe, const_cast<uint8_t *>(buffer) , iWidth*2); ret != JPEGE_SUCCESS) {
+    LOGE(TAG, "JPEGAddFrame failed %d", ret);
     fclose(static_cast<FILE *>(_jpeg->JPEGFile.fHandle));
     free(_jpeg);
     return 1;
   }
-  if (JPEGEncodeEnd(_jpeg) != JPEGE_SUCCESS) {
+  if (int ret = JPEGEncodeEnd(_jpeg); ret == 0) {
+    LOGE(TAG, "JPEGEncodeEnd failed %d", ret);
     fclose(static_cast<FILE *>(_jpeg->JPEGFile.fHandle));
     free(_jpeg);
     return 1;

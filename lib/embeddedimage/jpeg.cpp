@@ -14,9 +14,9 @@
 #include "simplebmp.h"
 
 bool image::JPEG::resizable() {
-  // if (_buffer) {
-  //   return true;
-  // }
+  if (_buffer) {
+    return true;
+  }
   return false;
 }
 

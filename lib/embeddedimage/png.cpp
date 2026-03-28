@@ -54,9 +54,9 @@ int image::PNGImage::resize(uint8_t *outBuf, int16_t x_start, int16_t y_start, i
     return png.decode((void *) &config, 0);
 }
 bool image::PNGImage::resizable() {
-    // if (_buffer) {
-    //     return true;
-    // }
+    if (_buffer) {
+        return true;
+    }
     return false;
 }
 
