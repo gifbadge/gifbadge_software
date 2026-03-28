@@ -85,12 +85,14 @@ bool lvgl_status = false;
 void lvgl_close() {
   LOGI(TAG, "Close");
   lvgl_status = false;
-  get_board()->GetDisplay()->onColorTransDone(nullptr);
+  auto *display = get_board()->GetDisplay();
+  display->onColorTransDone(nullptr);
   startInputTimer();
 
   destroy_screens();
   lv_obj_clean(lv_layer_top());
 
+  display->clear(); //Clear the display on close, as smaller images may not write the whole screen
   get_board()->PmRelease();
   LOGI(TAG, "Close Done");
 }
