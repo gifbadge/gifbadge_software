@@ -216,7 +216,7 @@ char *esp32::s3::full::v0_6::SerialNumber() {
   if (sn == 0x00) {
     esp_efuse_read_field_blob(ESP_EFUSE_KEY0_SERIAL, &sn, 64);
   }
-  sprintf(serial, "%s", lltoa(sn, 10));
+  sprintf(serial, "%lld", sn);
   return serial;
 }
 }

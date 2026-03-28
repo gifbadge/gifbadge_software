@@ -93,28 +93,6 @@ class ResizingImage: public ErrorImage {
 
 static std::pair<int16_t, int16_t> lastSize = {0,0};
 
-static const char* lltoa(long long val, int base){
-
-  static char buf[64] = {0};
-
-  int i = 62;
-  int sign = (val < 0);
-  if(sign) val = -val;
-
-  if(val == 0) return "0";
-
-  for(; val && i ; --i, val /= base) {
-    buf[i] = "0123456789abcdef"[val % base];
-  }
-
-  if(sign) {
-    buf[i--] = '-';
-  }
-  return &buf[i+1];
-
-}
-
-
 bool newImage = false;
 
 int64_t average_frame_delay = 0;
@@ -161,7 +139,8 @@ static image::frameReturn displayFile(std::unique_ptr<image::Image> &in, hal::di
         LOGI(TAG, "Average FPS: %f", last_fps);
         LOGI(TAG, "FPS: %f", 1000.00f/(static_cast<float>(millis()-image_start)/static_cast<float>(frame_count)));
       }
-      LOGI(TAG, "Average Frame Delay: %s, Max Delay: %li", lltoa(average_frame_delay/frame_count, 10), max_frame_delay);
+      LOGI(TAG, "Average Frame Delay: %lld, Max Delay: %li", average_frame_delay/frame_count, max_frame_delay);
+
       frame_count = 0;
       average_frame_time = 0;
       average_frame_delay = 0;
@@ -172,7 +151,7 @@ static image::frameReturn displayFile(std::unique_ptr<image::Image> &in, hal::di
     return {status.first, (calc_delay > 0 ? calc_delay : 0)/portTICK_PERIOD_MS};
   }
   else{
-    LOGI(TAG, "Frame Time: %s", lltoa(millis()-start, 10), max_frame_delay);
+    LOGI(TAG, "Frame Time: %lld", millis()-start, max_frame_delay);
     return {image::frameStatus::END, portMAX_DELAY};
   }
 }
@@ -295,7 +274,7 @@ static image::Image *openFile(const char *path, hal::display::Display *display) 
       if (save_cache(path, cache_path, display->buffer) != 0) {
         return new image::ErrorImage(display->size, "Error Saving Resized Image\n%s", path);
       }
-      LOGI(TAG, "Resizing time %s", lltoa(millis()-start, 10));
+      LOGI(TAG, "Resizing time %lld", millis()-start);
 
       delete in;
       in = ImageFactory(get_board()->GetDisplay()->size, cache_path);
