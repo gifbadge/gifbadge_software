@@ -170,8 +170,8 @@ extern "C" void app_main(void) {
 
 
 #ifdef ESP_PLATFORM
-  xTaskCreatePinnedToCore(display_task, "display_task", 4000, board, 2, &display_task_handle, 1);
-  xTaskCreatePinnedToCore(FileBufferTask, "file_buffer", 2000, &buffer_size, 2, &file_buffer_task, 0);
+  xTaskCreatePinnedToCore(display_task, "display_task", 6000, board, 2, &display_task_handle, 1);
+  xTaskCreatePinnedToCore(FileBufferTask, "file_buffer", 4000, &buffer_size, 2, &file_buffer_task, 0);
 #else
   xTaskCreate(display_task, "display_task", 5000, board, 2, &display_task_handle);
   xTaskCreate(FileBufferTask, "file_buffer", 4000, &buffer_size, 2, &file_buffer_task);
