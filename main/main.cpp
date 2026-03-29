@@ -189,7 +189,7 @@ extern "C" void app_main(void) {
   board->UsbCallBack(&usbCall);
 #endif
 
-  // vTaskDelay(500 / portTICK_PERIOD_MS);
+  vTaskDelay(500 / portTICK_PERIOD_MS);
 
   if(!board->UsbConnected()){
     xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_FILE, eSetValueWithOverwrite);
