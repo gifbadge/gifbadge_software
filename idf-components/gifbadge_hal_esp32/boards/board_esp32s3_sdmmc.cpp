@@ -31,8 +31,10 @@ StorageInfo esp32::s3::esp32s3_sdmmc::GetStorageInfo() {
 
 void esp32::s3::esp32s3_sdmmc::Reset() {
 #if CONFIG_TINYUSB_MSC_ENABLED
-  if(tinyusb_msc_delete_storage(storage_handle) != ESP_OK){
-    LOGI(TAG, "Failed to unmount");
+  if (storage_handle != nullptr) {
+    if(tinyusb_msc_delete_storage(storage_handle) != ESP_OK){
+      LOGI(TAG, "Failed to unmount");
+    }
   }
 #endif
   esp32s3::Reset();
@@ -40,8 +42,10 @@ void esp32::s3::esp32s3_sdmmc::Reset() {
 
 void esp32::s3::esp32s3_sdmmc::PowerOff() {
 #if CONFIG_TINYUSB_MSC_ENABLED
-  if(tinyusb_msc_delete_storage(storage_handle) != ESP_OK){
-    LOGI(TAG, "Failed to unmount");
+  if (storage_handle != nullptr) {
+    if(tinyusb_msc_delete_storage(storage_handle) != ESP_OK){
+      LOGI(TAG, "Failed to unmount");
+    }
   }
 #endif
 }
