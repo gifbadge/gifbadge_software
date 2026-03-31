@@ -191,7 +191,7 @@ void esp32::s3::full::v0_6::LateInit() {
 
 }
 WakeupSource esp32::s3::full::v0_6::BootReason() {
-  LOGI(TAG, "esp_reset_reason() %i", esp_reset_reason());
+  LOGD(TAG, "esp_reset_reason() %i", esp_reset_reason());
   if (_pmic->GetWakeup() != WakeupSource::NONE) {
     return _pmic->GetWakeup();
   }
