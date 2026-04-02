@@ -14,8 +14,6 @@
 #include "drivers/keys_esp_io_expander.h"
 #include "esp_io_expander_tca95xx_16bit.h"
 
-#define USB_ENABLE
-
 static const char *TAG = "board_2_1_v0_2v0_4";
 
 static bool checkSdState(esp_io_expander_handle_t io_expander) {

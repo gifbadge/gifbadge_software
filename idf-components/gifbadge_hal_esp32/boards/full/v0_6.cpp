@@ -17,7 +17,6 @@
 #include "esp_efuse_custom_table.h"
 
 
-// #define USB_ENABLE
 
 static const char *TAG = "Board::esp32::s3::full::v0_6";
 
