@@ -101,7 +101,7 @@ void style_init() {
   lv_style_set_text_color(&icon_style, lv_color_white());
   if (lv_disp_get_hor_res(NULL) > 240) {
     lv_style_set_text_font(&icon_style, &material_icons_56);
-    lv_style_set_text_font(&menu_font_style, &lv_font_montserrat_28);
+    lv_style_set_text_font(&menu_font_style, &lv_font_montserrat_28_compressed);
   } else {
     lv_style_set_text_font(&icon_style, &material_icons);
     lv_style_set_text_font(&menu_font_style, &lv_font_montserrat_14);
