@@ -5,7 +5,7 @@ file(GLOB PNGdec_src ${CMAKE_SOURCE_DIR}/external-deps/PNGdec/src/*.c ${CMAKE_SO
 file(GLOB JPEGDEC_src ${CMAKE_SOURCE_DIR}/external-deps/JPEGDEC/src/*.c ${CMAKE_SOURCE_DIR}/external-deps/JPEGDEC/src/*.cpp ${CMAKE_SOURCE_DIR}/external-deps/JPEGDEC/src/*.S)
 
 if(CONFIG_IDF_TARGET_ESP32S3)
-    set(ESP_COMPILE_OPTIONS -DNDEBUG -ffunction-sections -fdata-sections -Ofast -Wwrite-strings $<$<COMPILE_LANGUAGE:CXX>:-fno-exceptions -fno-rtti -fuse-cxa-atexit>)
+    set(ESP_COMPILE_OPTIONS -DNDEBUG -ffunction-sections -fdata-sections -O2 -Wwrite-strings $<$<COMPILE_LANGUAGE:CXX>:-fno-exceptions -fno-rtti -fuse-cxa-atexit>)
 else()
     set(ESP_COMPILE_OPTIONS -ffunction-sections -fdata-sections -O2 -Wwrite-strings -gdwarf-4 -ggdb $<$<COMPILE_LANGUAGE:CXX>:-fno-exceptions -fno-rtti -fuse-cxa-atexit>)
 endif()
