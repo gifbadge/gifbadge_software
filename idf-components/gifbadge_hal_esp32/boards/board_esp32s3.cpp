@@ -47,10 +47,10 @@ hal::config::Config *esp32s3::GetConfig() {
 }
 
 void esp32s3::DebugInfo() {
-  ESP_LOGI(TAG, "Free Heap: %d", esp_get_free_heap_size());
-  ESP_LOGI(TAG, "Free PSRAM: %d", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
-  ESP_LOGI(TAG, "Free Internal: %d", heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
-  ESP_LOGI(TAG, "Largest Free Block for DMA: %d", heap_caps_get_largest_free_block(MALLOC_CAP_DMA));
+  ESP_LOGI(TAG, "Free Heap: %db", esp_get_free_heap_size());
+  ESP_LOGI(TAG, "Free PSRAM: %db/%db", heap_caps_get_free_size(MALLOC_CAP_SPIRAM), heap_caps_get_total_size(MALLOC_CAP_SPIRAM));
+  ESP_LOGI(TAG, "Free Internal: %db/%db", heap_caps_get_free_size(MALLOC_CAP_INTERNAL), heap_caps_get_total_size(MALLOC_CAP_INTERNAL));
+  ESP_LOGI(TAG, "Largest Free Block for DMA: %db", heap_caps_get_largest_free_block(MALLOC_CAP_DMA));
   ESP_LOGI(TAG, "USB State: %d", UsbConnected());
 }
 
