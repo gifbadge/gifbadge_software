@@ -166,6 +166,11 @@ static void cbuffer_open(circular_buf_t *buffer, const char *path) {
   }
 }
 
+#ifdef DEBUG
+int buffer_full = 0;
+int buffer_empty = 0;
+#endif
+
 void FileBufferTask(void *params) {
   debug_print("Starting FileBuffer task\n");
   file_buffer_task = xTaskGetCurrentTaskHandle();
@@ -207,11 +212,20 @@ void FileBufferTask(void *params) {
             lseek(cbuffer.fd, 0, SEEK_SET);
             cbuffer_put_file(&cbuffer, BUFFER_CHUNK);
             cbuffer.start_valid = true;
+#ifdef DEBUG
+            debug_print("Buffer Full: %i\n", buffer_full);
+            debug_print("Buffer Empty: %i\n", buffer_empty);
+            buffer_full = 0;
+            buffer_empty = 0;
+#endif
           } else {
             delay = portMAX_DELAY;
           }
         }
       } else {
+#ifdef DEBUG
+        buffer_full += 1;
+#endif
         delay = portMAX_DELAY;
       }
       wakeup_sleeping_task();
@@ -227,6 +241,10 @@ bool filebuffer_open(const char *path) {
     debug_print("Timeout during file open\n");
     return false;
   }
+#ifdef DEBUG
+  buffer_full = 0;
+  buffer_empty = 0;
+#endif
   cbuffer_open(&cbuffer, path);
   xTaskNotifyIndexed(file_buffer_task, 0, 0, eNoAction);
   return true;
@@ -244,6 +262,9 @@ int32_t filebuffer_read(uint8_t *pBuf, const int32_t iLen) {
   while (available = cbuffer_get_avail(&cbuffer), available < iLen) {
   xTaskNotifyIndexed(file_buffer_task, 0, 0, eNoAction);
     if (wait_for_task(100/portTICK_PERIOD_MS) != pdTRUE) {
+#ifdef DEBUG
+      buffer_empty += 1;
+#endif
       debug_print("Timeout while reading file\n");
       return 0;
     }
