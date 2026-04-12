@@ -213,9 +213,11 @@ lv_obj_t *storage_menu() {
   lv_obj_t *clear_cache_label = lv_label_create(clear_cache_btn);
   lv_label_set_text(clear_cache_label, "Clear Image Cache");
 
-  lv_obj_t *exit_button = lv_file_list_add(cont_flex, "\ue5c9");
-  lv_obj_t *exit = lv_obj_create(exit_button);
-  lv_obj_add_flag(exit, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_t *exit_button = lv_file_list_add(cont_flex, ICON_BACK);
+  lv_obj_set_flex_align(exit_button, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+  lv_obj_t *exit = lv_label_create(exit_button);
+  lv_obj_add_style(exit, &menu_font_style, LV_PART_MAIN);
+  lv_label_set_text(exit, "Back");
   lv_group_remove_obj(exit);
 
   lv_obj_add_event_cb(format_btn, StorageFormat, LV_EVENT_CLICKED, cont_flex);

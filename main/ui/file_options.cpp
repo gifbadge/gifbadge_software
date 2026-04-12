@@ -221,11 +221,6 @@ lv_obj_t *FileOptions() {
                           config->getSlideShowTime() / 60,
                           (config->getSlideShowTime() % 60));
 
-    lv_obj_t *card_header = lv_file_list_add(cont_flex, nullptr);
-    lv_obj_add_style(card_header, &menu_font_style, LV_PART_MAIN);
-    lv_obj_t *card_header_text = lv_label_create(card_header);
-    lv_label_set_text(card_header_text, "Cards");
-
     //Card Select Up
     lv_obj_t *card_up_select = lv_file_list_add(cont_flex, "\uf182");
 
@@ -250,14 +245,18 @@ lv_obj_t *FileOptions() {
 
     //Save
     lv_obj_t *save_button = lv_file_list_add(cont_flex, "\ue161");
-    lv_obj_t *save = lv_obj_create(save_button);
-    lv_obj_add_flag(save, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_set_flex_align(save_button, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_t *save = lv_label_create(save_button);
+    lv_obj_add_style(save, &menu_font_style, LV_PART_MAIN);
+    lv_label_set_text(save, "Save Changes");
     lv_group_remove_obj(save);
 
     //Exit
     lv_obj_t *exit_button = lv_file_list_add(cont_flex, "\ue5c9");
-    lv_obj_t *exit = lv_obj_create(exit_button);
-    lv_obj_add_flag(exit, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_set_flex_align(exit_button, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_t *exit = lv_label_create(exit_button);
+    lv_obj_add_style(exit, &menu_font_style, LV_PART_MAIN);
+    lv_label_set_text(exit, "Discard Changes");
     lv_group_remove_obj(exit);
 
     //Fields

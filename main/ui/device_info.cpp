@@ -120,12 +120,13 @@ lv_obj_t *device_info() {
       });
     }
 
-    lv_obj_t *exit_btn = lv_file_list_add(cont_flex, nullptr);
-    lv_obj_t *exit_label = lv_label_create(exit_btn);
-    lv_obj_add_style(exit_label, &menu_font_style, LV_PART_MAIN);
-    lv_label_set_text(exit_label, "Exit");
+  lv_obj_t *exit_button = lv_file_list_add(cont_flex, ICON_BACK);
+  lv_obj_set_flex_align(exit_button, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+  lv_obj_t *exit = lv_label_create(exit_button);
+  lv_obj_add_style(exit, &menu_font_style, LV_PART_MAIN);
+  lv_label_set_text(exit, "Back");
 
-    lv_obj_add_event_cb(exit_label, exit_callback, LV_EVENT_CLICKED, cont_flex);
+    lv_obj_add_event_cb(exit, exit_callback, LV_EVENT_CLICKED, cont_flex);
 
     lv_obj_add_event_cb(cont_flex, [](lv_event_t *e){
       auto child_count = lv_obj_get_child_count(lv_event_get_target_obj(e));
