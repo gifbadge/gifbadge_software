@@ -45,12 +45,6 @@ static lv_obj_t *ShutdownCallback() {
   return nullptr;
 }
 
-static lv_obj_t * help_callback() {
-  // TaskHandle_t handle = xTaskGetHandle("LVGL");
-  // xTaskNotifyIndexed(handle, 0, LVGL_STOP, eSetValueWithOverwrite);
-  return nullptr;
-}
-
 static void BacklightSliderChangedCallback(lv_event_t *e) {
   lv_obj_t *obj = lv_event_get_target_obj(e);
   int level = lv_slider_get_value(obj) * 10;
