@@ -21,8 +21,8 @@ static const char *TAG = "board_esp32s3_sdmmc";
 namespace Boards {
 
 StorageInfo esp32::s3::esp32s3_sdmmc::GetStorageInfo() {
-  StorageType type = (card->ocr & SD_OCR_SDHC_CAP) ? StorageType_SDHC : StorageType_SD;
-  double speed = card->real_freq_khz / 1000.00;
+  const StorageType type = (card->ocr & SD_OCR_SDHC_CAP) ? StorageType_SDHC : StorageType_SD;
+  const double speed = card->real_freq_khz / 1000.00;
   uint64_t total_bytes;
   uint64_t free_bytes;
   esp_vfs_fat_info("/data", &total_bytes, &free_bytes);
@@ -129,7 +129,7 @@ esp_err_t mount_sdmmc_slot(const sdmmc_host_t *host,
 
   LOGI(TAG, "Initializing SDCard");
 
-  esp_vfs_fat_sdmmc_mount_config_t mount_config = {
+  constexpr esp_vfs_fat_sdmmc_mount_config_t mount_config = {
     .format_if_mount_failed = false, .max_files = 5, .allocation_unit_size = 16 * 1024,
     .disk_status_check_enable = true, .use_one_fat = false
   };
@@ -226,7 +226,7 @@ bool esp32::s3::esp32s3_sdmmc::UsbConnected() {
   return false;
 #endif
 }
-int esp32::s3::esp32s3_sdmmc::UsbCallBack(tusb_msc_callback_t callback) {
+int esp32::s3::esp32s3_sdmmc::UsbCallBack(const tusb_msc_callback_t callback) {
 #if CONFIG_TINYUSB_MSC_ENABLED
   tinyusb_msc_set_storage_callback(callback, nullptr);
 #endif

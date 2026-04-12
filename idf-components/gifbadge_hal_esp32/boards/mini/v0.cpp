@@ -174,7 +174,7 @@ void esp32::s3::mini::v0::LateInit() {
   tinyusb_console_init(TINYUSB_CDC_ACM_0);
 #endif
 
-  esp_pm_config_t pm_config = {.max_freq_mhz = 240, .min_freq_mhz = 240, .light_sleep_enable = false};
+  constexpr esp_pm_config_t pm_config = {.max_freq_mhz = 240, .min_freq_mhz = 240, .light_sleep_enable = false};
   esp_pm_configure(&pm_config);
 }
 
@@ -187,7 +187,7 @@ bool esp32::s3::mini::v0::UsbConnected() {
   return false;
 #endif
 }
-int esp32::s3::mini::v0::UsbCallBack(tusb_msc_callback_t callback) {
+int esp32::s3::mini::v0::UsbCallBack(const tusb_msc_callback_t callback) {
 #if CONFIG_TINYUSB_MSC_ENABLED
   tinyusb_msc_set_storage_callback(callback, nullptr);
 #endif

@@ -122,7 +122,7 @@ const char *esp32::s3::mini::v0_3::Name() {
 
 void esp32::s3::mini::v0_3::LateInit() {
   buffer = heap_caps_malloc(240 * 240 + 0x6100, MALLOC_CAP_INTERNAL);
-  i2c_master_bus_config_t i2c_mst_config = {
+  constexpr i2c_master_bus_config_t i2c_mst_config = {
     .i2c_port = I2C_NUM_0,
     .sda_io_num = GPIO_NUM_6,
     .scl_io_num = GPIO_NUM_7,
@@ -149,7 +149,7 @@ void esp32::s3::mini::v0_3::LateInit() {
   gpio_isr_handler_add(GPIO_CARD_DETECT, sdcard_removed, nullptr);
   gpio_set_intr_type(GPIO_CARD_DETECT, GPIO_INTR_ANYEDGE);
 
-  esp_pm_config_t pm_config = {.max_freq_mhz = 240, .min_freq_mhz = 40, .light_sleep_enable = true};
+  constexpr esp_pm_config_t pm_config = {.max_freq_mhz = 240, .min_freq_mhz = 40, .light_sleep_enable = true};
   esp_pm_configure(&pm_config);
   esp_pm_lock_create(ESP_PM_CPU_FREQ_MAX, 0, "USB", &usb_pm);
 

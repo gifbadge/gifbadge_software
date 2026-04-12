@@ -6,7 +6,6 @@
 
 #include "sdkconfig.h"
 #include "esp_efuse.h"
-#include <assert.h>
 #include "esp_efuse_custom_table.h"
 
 // md5_digest_table 1cc13c25161e1fe36796db43a91ab759

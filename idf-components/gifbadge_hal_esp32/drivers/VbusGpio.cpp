@@ -7,7 +7,7 @@
 #include <driver/gpio.h>
 #include "drivers/vbus_gpio.h"
 
-hal::vbus::esp32s3::VbusGpio::VbusGpio(gpio_num_t gpio): _gpio(gpio) {
+hal::vbus::esp32s3::VbusGpio::VbusGpio(const gpio_num_t gpio): _gpio(gpio) {
 
 }
 

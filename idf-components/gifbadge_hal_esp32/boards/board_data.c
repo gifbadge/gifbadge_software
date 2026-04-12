@@ -4,7 +4,6 @@
  * SPDX-License-Identifier:   GPL-3.0-or-later
  ******************************************************************************/
 
-#include <stdint.h>
 #include "esp_ota.h"
 #include "boards/boards.h"
 #include "sdkconfig.h"

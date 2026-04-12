@@ -10,7 +10,7 @@
 
 static const char *TAG = "keys_esp_io_expander";
 
-hal::keys::esp32s3::keys_esp_io_expander::keys_esp_io_expander(esp_io_expander_handle_t io_expander, int up, int down, int enter)
+hal::keys::esp32s3::keys_esp_io_expander::keys_esp_io_expander(esp_io_expander_handle_t io_expander, const int up, const int down, const int enter)
     : _io_expander(io_expander) {
 
   buttonConfig[KEY_UP] = up;
@@ -27,7 +27,7 @@ hal::keys::esp32s3::keys_esp_io_expander::keys_esp_io_expander(esp_io_expander_h
 hal::keys::EVENT_STATE * hal::keys::esp32s3::keys_esp_io_expander::read() {
   for (int b = 0; b < KEY_MAX; b++) {
     if (buttonConfig[b] >= 0) {
-      hal::keys::EVENT_STATE state = zmk_debounce_is_pressed(&_debounce_states[b]) ? STATE_PRESSED : STATE_RELEASED;
+      EVENT_STATE state = zmk_debounce_is_pressed(&_debounce_states[b]) ? STATE_PRESSED : STATE_RELEASED;
       if (state == STATE_PRESSED && last_state[b] == state) {
         _currentState[b] = STATE_HELD;
       } else {
@@ -45,11 +45,11 @@ void hal::keys::esp32s3::keys_esp_io_expander::poll() {
     //only update when we have a good read
     lastLevels = levels;
 
-    auto time = esp_timer_get_time() / 1000;
+    const auto time = esp_timer_get_time() / 1000;
 
     for (int b = 0; b < KEY_MAX; b++) {
       if (buttonConfig[b] >= 0) {
-        bool state = levels & (1 << buttonConfig[b]);
+        const bool state = levels & (1 << buttonConfig[b]);
         zmk_debounce_update(&_debounce_states[b], state == 0, static_cast<int>(time - last), &_debounce_config);
         if (zmk_debounce_get_changed(&_debounce_states[b])) {
           LOGI(TAG, "%i changed", b);

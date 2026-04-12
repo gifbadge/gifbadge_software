@@ -32,7 +32,7 @@ hal::battery::esp32s3::battery_max17048::battery_max17048(i2c_master_bus_handle_
   }
   const esp_timer_create_args_t battery_timer_args = {
       .callback = [](void *params) {
-        auto bat = static_cast<battery_max17048 *>(params);
+        const auto bat = static_cast<battery_max17048 *>(params);
         bat->poll();
       },
       .arg = this,
@@ -74,7 +74,7 @@ void hal::battery::esp32s3::battery_max17048::BatteryRemoved() {
 void hal::battery::esp32s3::battery_max17048::BatteryInserted() {
   // Quickstart. so the MAX17048 restarts it's SOC algorythm.
   //Prevents erroneous readings if battery is swapped while charging
-  uint8_t cmd[] = {0x06, 0x80, 0x00};
+  constexpr uint8_t cmd[] = {0x06, 0x80, 0x00};
   i2c_master_transmit(i2c_handle, cmd, sizeof(cmd) , 100);
   present = true;
 }
@@ -92,5 +92,5 @@ hal::battery::Battery::State hal::battery::esp32s3::battery_max17048::BatterySta
   if(!gpio_get_level(_vbus_pin)) {
     return State::DISCHARGING;
   }
-  return hal::battery::Battery::State::ERROR;
+  return State::ERROR;
 }

@@ -202,7 +202,7 @@ hal::display::esp32s3::display_st7701s::display_st7701s(spi_line_config_t line_c
   ESP_ERROR_CHECK(esp_timer_create(&flushTimerArgs, &flushTimerHandle));
 }
 
-void hal::display::esp32s3::display_st7701s::write(int x_start, int y_start, int x_end, int y_end, void *color_data) {
+void hal::display::esp32s3::display_st7701s::write(const int x_start, const int y_start, const int x_end, const int y_end, void *color_data) {
   buffer = static_cast<uint8_t *>(color_data == _fb0 ? _fb1 : _fb0);
   esp_lcd_panel_draw_bitmap(panel_handle, x_start, y_start, x_end, y_end, color_data);
   esp_timer_start_once(flushTimerHandle, 30*1000);

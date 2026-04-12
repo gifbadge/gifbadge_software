@@ -7,7 +7,6 @@
 
 #include <driver/gpio.h>
 #include <esp_pm.h>
-#include <esp_attr.h>
 #include "log.h"
 #include "drivers/keys_gpio.h"
 
@@ -46,23 +45,22 @@ hal::keys::esp32s3::keys_gpio::keys_gpio(gpio_num_t up, gpio_num_t down, gpio_nu
   _debounce_states[KEY_ENTER] = zmk_debounce_state{false, false, 0};
 
   const esp_timer_create_args_t wakeTimerArgs = {
-      .callback = &wakeTimerHandler,
-      .arg = buttonConfig,
-      .dispatch_method = ESP_TIMER_TASK,
-      .name = "keyWakeTimer",
-      .skip_unhandled_events = true
+    .callback = &wakeTimerHandler,
+    .arg = buttonConfig,
+    .dispatch_method = ESP_TIMER_TASK,
+    .name = "keyWakeTimer",
+    .skip_unhandled_events = true
   };
   ESP_ERROR_CHECK(esp_timer_create(&wakeTimerArgs, &wakeTimer));
 
   last = esp_timer_get_time() / 1000;
-
 }
 
 hal::keys::EVENT_STATE * hal::keys::esp32s3::keys_gpio::read() {
 
   for (int b = 0; b < KEY_MAX; b++) {
     if (buttonConfig[b] >= 0) {
-      hal::keys::EVENT_STATE state = zmk_debounce_is_pressed(&_debounce_states[b]) ? STATE_PRESSED : STATE_RELEASED;
+      EVENT_STATE state = zmk_debounce_is_pressed(&_debounce_states[b]) ? STATE_PRESSED : STATE_RELEASED;
       if (state == STATE_PRESSED && last_state[b] == state) {
         _currentState[b] = STATE_HELD;
       } else {
@@ -75,11 +73,11 @@ hal::keys::EVENT_STATE * hal::keys::esp32s3::keys_gpio::read() {
 }
 
 void hal::keys::esp32s3::keys_gpio::poll() {
-  auto time = esp_timer_get_time() / 1000;
+  const auto time = esp_timer_get_time() / 1000;
 
   for (int b = 0; b < KEY_MAX; b++) {
     if (buttonConfig[b] >= 0) {
-      bool state = gpio_get_level(buttonConfig[b]);
+      const bool state = gpio_get_level(buttonConfig[b]);
       zmk_debounce_update(&_debounce_states[b], state == 0, static_cast<int>(time - last), &_debounce_config);
       if (zmk_debounce_get_changed(&_debounce_states[b])) {
         LOGI(TAG, "%i changed", b);

@@ -4,8 +4,8 @@
  * SPDX-License-Identifier:   GPL-3.0-or-later
  ******************************************************************************/
 
-#include <inttypes.h>
-#include <stdlib.h>
+#include <cinttypes>
+#include <cstdlib>
 
 #include "esp_check.h"
 #include "esp_log.h"
@@ -13,7 +13,6 @@
 #include "esp_io_expander.h"
 #include "drivers/esp_io_expander_gpio.h"
 #include "hal/gpio.h"
-#include "log.h"
 
 #define IO_COUNT                (1)
 
@@ -76,9 +75,9 @@ esp_err_t esp_io_expander_new_gpio(hal::gpio::Gpio *gpio, esp_io_expander_handle
   return ret;
 }
 
-static esp_err_t read_input_reg(esp_io_expander_handle_t handle, uint32_t *value)
+static esp_err_t read_input_reg(const esp_io_expander_handle_t handle, uint32_t *value)
 {
-  auto *tca = (esp_io_expander_gpio_t *)__containerof(handle, esp_io_expander_gpio_t, base);
+  const auto *tca = __containerof(handle, esp_io_expander_gpio_t, base);
   hal::gpio::GpioState tmp = tca->gpio->GpioRead();
   if (tmp != hal::gpio::GpioState::INVALID) {
     *value = tca->gpio->GpioRead() == hal::gpio::GpioState::HIGH ? 1 : 0;
@@ -87,9 +86,9 @@ static esp_err_t read_input_reg(esp_io_expander_handle_t handle, uint32_t *value
   return ESP_ERR_INVALID_STATE;
 }
 
-static esp_err_t write_output_reg(esp_io_expander_handle_t handle, uint32_t value)
+static esp_err_t write_output_reg(esp_io_expander_handle_t handle, const uint32_t value)
 {
-  auto *tca = (esp_io_expander_gpio_t *)__containerof(handle, esp_io_expander_gpio_t, base);
+  auto *tca = __containerof(handle, esp_io_expander_gpio_t, base);
   tca->regs.output = value;
   tca->gpio->GpioWrite(value);
   return ESP_OK;
@@ -97,33 +96,33 @@ static esp_err_t write_output_reg(esp_io_expander_handle_t handle, uint32_t valu
 
 static esp_err_t read_output_reg(esp_io_expander_handle_t handle, uint32_t *value)
 {
-  esp_io_expander_gpio_t *tca = (esp_io_expander_gpio_t *)__containerof(handle, esp_io_expander_gpio_t, base);
+  const auto *tca = __containerof(handle, esp_io_expander_gpio_t, base);
   *value = tca->regs.output;
   return ESP_OK;
 }
 
-static esp_err_t write_direction_reg(esp_io_expander_handle_t handle, uint32_t value)
+static esp_err_t write_direction_reg(esp_io_expander_handle_t handle, const uint32_t value)
 {
-  auto *tca = (esp_io_expander_gpio_t *)__containerof(handle, esp_io_expander_gpio_t, base);
+  auto *tca = __containerof(handle, esp_io_expander_gpio_t, base);
   tca->regs.direction = value;
   return ESP_OK;
 }
 
 static esp_err_t read_direction_reg(esp_io_expander_handle_t handle, uint32_t *value)
 {
-  auto *tca = (esp_io_expander_gpio_t *)__containerof(handle, esp_io_expander_gpio_t, base);
+  const auto *tca = __containerof(handle, esp_io_expander_gpio_t, base);
   *value = tca->regs.direction;
   return ESP_OK;
 }
 
-static esp_err_t reset(esp_io_expander_t *handle)
+static esp_err_t reset(esp_io_expander_t *)
 {
   return ESP_OK;
 }
 
 static esp_err_t del(esp_io_expander_t *handle)
 {
-  auto *tca = (esp_io_expander_gpio_t *)__containerof(handle, esp_io_expander_gpio_t, base);
+  auto *tca = __containerof(handle, esp_io_expander_gpio_t, base);
   free(tca);
   return ESP_OK;
 }

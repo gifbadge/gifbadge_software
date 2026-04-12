@@ -30,7 +30,7 @@ esp32::s3::full::v0_6::v0_6() {
   _config = new hal::config::esp32s3::Config_NVS(this);
   gpio_install_isr_service(0);
 
-  i2c_master_bus_config_t i2c_mst_config = {
+  constexpr i2c_master_bus_config_t i2c_mst_config = {
     .i2c_port = I2C_NUM_0,
     .sda_io_num = GPIO_NUM_47,
     .scl_io_num = GPIO_NUM_48,
@@ -144,7 +144,7 @@ void esp32::s3::full::v0_6::LateInit() {
 
   esp_io_expander_new_gpio(_cs, &_io_expander);
 
-  spi_line_config_t line_config = {
+  const spi_line_config_t line_config = {
       .cs_io_type = IO_TYPE_EXPANDER,             // Set to `IO_TYPE_GPIO` if using GPIO, same to below
       .cs_gpio_num = 1,
       .scl_io_type = IO_TYPE_GPIO,
@@ -173,7 +173,7 @@ void esp32::s3::full::v0_6::LateInit() {
 
 
   //TODO: Check if we can use DFS with the RGB LCD
-  esp_pm_config_t pm_config = {.max_freq_mhz = 240, .min_freq_mhz = 80, .light_sleep_enable = false};
+  constexpr esp_pm_config_t pm_config = {.max_freq_mhz = 240, .min_freq_mhz = 80, .light_sleep_enable = false};
   esp_pm_configure(&pm_config);
 
   _pmic->EnableADC();

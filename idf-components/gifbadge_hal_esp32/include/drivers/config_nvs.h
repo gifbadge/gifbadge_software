@@ -39,7 +39,7 @@ class Config_NVS: public Config {
   std::unique_ptr<nvs::NVSHandle> handle;
   template<typename T>
   T get_item_or_default(const char *key, T value);
-  void get_string_or_default(const char *item, const char* default_value, char *out, size_t out_len);
+  void get_string_or_default(const char *item, const char* default_value, char *out, size_t out_len) const;
   Boards::Board *_board;
 };
 }

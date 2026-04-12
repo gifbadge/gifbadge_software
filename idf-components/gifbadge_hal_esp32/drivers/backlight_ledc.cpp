@@ -28,7 +28,7 @@ hal::backlight::esp32s3::backlight_ledc::backlight_ledc(gpio_num_t gpio, bool in
 
   // Prepare and then apply the LEDC PWM channel configuration
   ledc_channel_config_t ledc_channel = {
-      .gpio_num       = (gpio_num_t) gpio,
+      .gpio_num       = gpio,
       .speed_mode     = LEDC_LOW_SPEED_MODE,
       .channel        = LEDC_CHANNEL_0,
       .intr_type      = LEDC_INTR_DISABLE,
@@ -42,10 +42,10 @@ hal::backlight::esp32s3::backlight_ledc::backlight_ledc(gpio_num_t gpio, bool in
   ESP_ERROR_CHECK(ledc_channel_config(&ledc_channel));
   ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, static_cast<uint32_t>(256 / (level / 100.00)) - 1);
   ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0);
-  ESP_ERROR_CHECK(gpio_sleep_sel_dis((gpio_num_t) gpio));
+  ESP_ERROR_CHECK(gpio_sleep_sel_dis(gpio));
 }
 
-void hal::backlight::esp32s3::backlight_ledc::state(bool state) {
+void hal::backlight::esp32s3::backlight_ledc::state(const bool state) {
   if (state) {
     ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, static_cast<uint32_t>(256 / (lastLevel / 100.00)) - 1);
     ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0);
@@ -55,9 +55,9 @@ void hal::backlight::esp32s3::backlight_ledc::state(bool state) {
   }
 }
 
-void hal::backlight::esp32s3::backlight_ledc::setLevel(int level) {
+void hal::backlight::esp32s3::backlight_ledc::setLevel(const int level) {
   lastLevel = level;
-  uint32_t duty = (level*256)/100;
+  const uint32_t duty = (level*256)/100;
   LOGI(TAG, "backlight level: %lu\n", duty);
   ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, duty);
   ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0);

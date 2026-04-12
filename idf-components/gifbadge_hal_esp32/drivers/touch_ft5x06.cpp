@@ -6,7 +6,6 @@
 
 #include "drivers/touch_ft5x06.h"
 
-#include <log.h>
 #include <driver/i2c_master.h>
 
 static const char* TAG = "touch_ft5x06";

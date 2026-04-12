@@ -64,7 +64,7 @@ hal::display::esp32s3::display_gc9a01::display_gc9a01(int mosi, int sck, int cs,
       }
   };
   // Attach the LCD to the SPI bus
-  ESP_ERROR_CHECK(esp_lcd_new_panel_io_spi((esp_lcd_spi_bus_handle_t) SPI2_HOST, &io_config, &io_handle));
+  ESP_ERROR_CHECK(esp_lcd_new_panel_io_spi(SPI2_HOST, &io_config, &io_handle));
 
   esp_lcd_panel_dev_config_t panel_config = {
       // .rgb_endian = LCD_RGB_ENDIAN_BGR,
@@ -100,14 +100,14 @@ bool flush_ready(esp_lcd_panel_io_handle_t, esp_lcd_panel_io_event_data_t *, voi
   return false;
 }
 
-bool hal::display::esp32s3::display_gc9a01::onColorTransDone(flushCallback_t callback) {
+bool hal::display::esp32s3::display_gc9a01::onColorTransDone(const flushCallback_t callback) {
   if (callback) {
     pcallback = callback;
-    esp_lcd_panel_io_callbacks_t conf = {.on_color_trans_done = flush_ready};
+    constexpr esp_lcd_panel_io_callbacks_t conf = {.on_color_trans_done = flush_ready};
     esp_lcd_panel_io_register_event_callbacks(io_handle, &conf, nullptr);
   } else {
     pcallback = nullptr;
-    esp_lcd_panel_io_callbacks_t conf = {.on_color_trans_done = nullptr};
+    constexpr esp_lcd_panel_io_callbacks_t conf = {.on_color_trans_done = nullptr};
     esp_lcd_panel_io_register_event_callbacks(io_handle, &conf, nullptr);
   }
   return true;
@@ -150,16 +150,16 @@ void lv_draw_sw_rgb565_swap(void * buf, uint32_t buf_size_px)
 
   /*Process the last pixel if needed*/
   if(buf_size_px & 0x1) {
-    uint32_t e = buf_size_px - 1;
+    const uint32_t e = buf_size_px - 1;
     buf16[e] = ((buf16[e] & 0xff00) >> 8) | ((buf16[e] & 0x00ff) << 8);
   }
 
 }
 
-void hal::display::esp32s3::display_gc9a01::write(int x_start,
-                                                  int y_start,
-                                                  int x_end,
-                                                  int y_end,
+void hal::display::esp32s3::display_gc9a01::write(const int x_start,
+                                                  const int y_start,
+                                                  const int x_end,
+                                                  const int y_end,
                                                   void *color_data) {
   lv_draw_sw_rgb565_swap(color_data, 240*240);
   esp_lcd_panel_draw_bitmap(panel_handle, x_start, y_start, x_end, y_end, color_data);
