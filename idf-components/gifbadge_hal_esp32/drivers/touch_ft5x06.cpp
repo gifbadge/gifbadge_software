@@ -10,7 +10,7 @@
 
 static const char* TAG = "touch_ft5x06";
 
-hal::touch::esp32s3::touch_ft5x06::touch_ft5x06(i2c_master_bus_handle_t i2c) {
+hal::touch::esp32s3::touch_ft5x06::touch_ft5x06(i2c_master_bus_handle_t bus) {
   uint8_t out[2];
 
   i2c_device_config_t dev_cfg = {
@@ -20,7 +20,7 @@ hal::touch::esp32s3::touch_ft5x06::touch_ft5x06(i2c_master_bus_handle_t i2c) {
     .scl_wait_us = 0,
     .flags = {.disable_ack_check = false},
   };
-  ESP_ERROR_CHECK(i2c_master_bus_add_device(i2c, &dev_cfg, &i2c_handle));
+  ESP_ERROR_CHECK(i2c_master_bus_add_device(bus, &dev_cfg, &i2c_handle));
 
   // Valid touching detect threshold
   out[0] = FT5x06_ID_G_THGROUP;
