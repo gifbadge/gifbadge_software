@@ -95,6 +95,7 @@ bool esp32s3::OtaCheck() {
 #define OTA_HEADER_SIZE (sizeof(esp_image_header_t)+ sizeof(esp_image_segment_header_t) + sizeof(esp_app_desc_t) + sizeof(esp_custom_app_desc_t))
 
 OtaError esp32s3::OtaHeaderValidate(uint8_t const *data) {
+  assert(data != nullptr);
   OtaError ret = OtaError::OK;
   auto *new_header_info = static_cast<esp_image_header_t *>(malloc(sizeof(esp_image_header_t)));
   auto *new_app_info = static_cast<esp_app_desc_t *>(malloc(sizeof(esp_app_desc_t)));
