@@ -489,25 +489,11 @@ void tud_dfu_manifest_cb(uint8_t) {
   tud_dfu_finish_flashing(DFU_STATUS_OK);
 }
 
-const char *upload_image[2] =
-{
-  "Hello world from TinyUSB DFU! - Partition 0",
-  "Hello world from TinyUSB DFU! - Partition 1"
-};
-
 // Invoked when received DFU_UPLOAD request
 // Application must populate data with up to length bytes and
 // Return the number of written bytes
-uint16_t tud_dfu_upload_cb(uint8_t alt, uint16_t block_num, uint8_t *data, uint16_t length) {
-  (void) block_num;
-  (void) length;
-
-  LOGI(TAG, "Upload BlockNum %u of length %u", alt, block_num, length);
-
-  auto const xfer_len = static_cast<uint16_t>(strlen(upload_image[alt]));
-  memcpy(data, upload_image[alt], xfer_len);
-
-  return xfer_len;
+uint16_t tud_dfu_upload_cb(uint8_t, uint16_t, uint8_t *, uint16_t) {
+  return 0;
 }
 
 // Invoked when the Host has terminated a download or upload transfer
