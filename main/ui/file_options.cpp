@@ -222,8 +222,10 @@ lv_obj_t *FileOptions() {
                           (config->getSlideShowTime() % 60));
 
     //Card Select Up
-    lv_obj_t *card_up_select = lv_file_list_add(cont_flex, "\uf182");
-
+    lv_obj_t *card_up_select = lv_file_list_add(cont_flex, "\uea67");
+    lv_obj_t *card_up_number = lv_label_create(card_up_select);
+    lv_obj_add_style(card_up_number, &menu_font_style, LV_PART_MAIN);
+    lv_label_set_text(card_up_number, "1");
     lv_obj_t *card_up_label = lv_label_create(card_up_select);
     lv_obj_add_style(card_up_label, &menu_font_style, LV_PART_MAIN);
     get_board()->GetConfig()->getCard(hal::config::cards::UP, path);
@@ -233,7 +235,10 @@ lv_obj_t *FileOptions() {
     lv_obj_add_style(card_up_label, &file_select_style, LV_PART_MAIN);
 
     //Card Select Down
-    lv_obj_t *card_down_select = lv_file_list_add(cont_flex, "\uf181");
+    lv_obj_t *card_down_select = lv_file_list_add(cont_flex, "\uea67");
+    lv_obj_t *card_down_number = lv_label_create(card_down_select);
+    lv_obj_add_style(card_down_number, &menu_font_style, LV_PART_MAIN);
+    lv_label_set_text(card_down_number, "2");
 
     lv_obj_t *card_down_label = lv_label_create(card_down_select);
     lv_obj_add_style(card_down_label, &menu_font_style, LV_PART_MAIN);
