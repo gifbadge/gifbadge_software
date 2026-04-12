@@ -13,8 +13,8 @@
 static const char *TAG = "battery_analog.cpp";
 
 //https://github.com/rlogiacco/BatterySense/blob/f43f782be47c3b6b7fd8a9ae4dfee7981aec4627/Battery.h#L101
-static inline uint8_t sigmoidal(uint16_t voltage, uint16_t minVoltage, uint16_t maxVoltage) {
-  auto result =
+static inline uint8_t sigmoidal(const uint16_t voltage, uint16_t minVoltage, uint16_t maxVoltage) {
+  const auto result =
       static_cast<uint8_t>(105 - (105 / (1 + pow(1.724 * (voltage - minVoltage) / (maxVoltage - minVoltage), 5.5))));
   return result >= 100 ? 100 : result;
 }
@@ -37,7 +37,7 @@ hal::battery::esp32s3::battery_analog::battery_analog(adc_channel_t) {
   LOGI(TAG, "Initial Voltage: %f", smoothed_voltage * 2);
   alpha = 0.05;
   const esp_timer_create_args_t battery_timer_args = {.callback = [](void *params) {
-    auto bat = static_cast<hal::battery::esp32s3::battery_analog *>(params);
+    const auto bat = static_cast<battery_analog *>(params);
     bat->poll();
   }, .arg = this, .dispatch_method = ESP_TIMER_TASK, .name = "battery_analog", .skip_unhandled_events = true};
   esp_timer_handle_t battery_handler_handle = nullptr;

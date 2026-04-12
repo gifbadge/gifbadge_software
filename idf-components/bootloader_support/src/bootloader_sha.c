@@ -175,3 +175,4 @@ void bootloader_sha256_finish(bootloader_sha256_handle_t handle, uint8_t *digest
     asm volatile ("memw");
 }
 #endif /* CONFIG_IDF_TARGET_ESP32 */
+

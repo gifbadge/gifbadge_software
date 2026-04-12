@@ -14,8 +14,6 @@
 #include "drivers/keys_esp_io_expander.h"
 #include "esp_io_expander_tca95xx_16bit.h"
 
-#define USB_ENABLE
-
 static const char *TAG = "board_2_1_v0_2v0_4";
 
 static bool checkSdState(esp_io_expander_handle_t io_expander) {
@@ -38,9 +36,7 @@ static void checkSDTimer(void *arg) {
 
 namespace Boards {
 
-esp32::s3::full::v0_2v0_4::v0_2v0_4() {
-
-}
+esp32::s3::full::v0_2v0_4::v0_2v0_4() = default;
 
 hal::battery::Battery *esp32::s3::full::v0_2v0_4::GetBattery() {
   return _battery;
@@ -96,13 +92,15 @@ void vbusISR(void *) {
 void esp32::s3::full::v0_2v0_4::LateInit() {
  buffer = heap_caps_malloc(480 * 480 + 0x6100, MALLOC_CAP_INTERNAL);
   _config = new hal::config::esp32s3::Config_NVS(this);
-  i2c_master_bus_config_t i2c_mst_config = {
+ constexpr i2c_master_bus_config_t i2c_mst_config = {
     .i2c_port = I2C_NUM_0,
     .sda_io_num = GPIO_NUM_47,
     .scl_io_num = GPIO_NUM_48,
     .clk_source = I2C_CLK_SRC_RC_FAST,
     .glitch_ignore_cnt = 7,
-    .flags = {.enable_internal_pullup = false},
+    .intr_priority = 0,
+    .trans_queue_depth = 0,
+    .flags = {.enable_internal_pullup = false, .allow_pd = false},
   };
   ESP_ERROR_CHECK(i2c_new_master_bus(&i2c_mst_config, &bus_handle));
   // _i2c = new I2C(I2C_NUM_0, GPIO_NUM_47, GPIO_NUM_48, 100 * 1000, false);
@@ -123,7 +121,7 @@ void esp32::s3::full::v0_2v0_4::LateInit() {
   vTaskDelay(50/portTICK_PERIOD_MS);
   esp_io_expander_set_level(_io_expander, IO_EXPANDER_PIN_NUM_2, 1);
 
-  spi_line_config_t line_config = {
+  const spi_line_config_t line_config = {
       .cs_io_type = IO_TYPE_EXPANDER,             // Set to `IO_TYPE_GPIO` if using GPIO, same to below
       .cs_gpio_num = IO_EXPANDER_PIN_NUM_1,
       .scl_io_type = IO_TYPE_GPIO,
@@ -145,7 +143,7 @@ void esp32::s3::full::v0_2v0_4::LateInit() {
   _touch = new hal::touch::esp32s3::touch_ft5x06(bus_handle);
 
   //TODO: Check if we can use DFS with the RGB LCD
-  esp_pm_config_t pm_config = {.max_freq_mhz = 240, .min_freq_mhz = 80, .light_sleep_enable = false};
+ constexpr esp_pm_config_t pm_config = {.max_freq_mhz = 240, .min_freq_mhz = 80, .light_sleep_enable = false};
   esp_pm_configure(&pm_config);
 
   gpio_config_t vbus_config = {};
@@ -209,7 +207,7 @@ bool hal::vbus::esp32s3::b2_1_v0_2v0_4_vbus::VbusConnected() {
   return gpio_get_level(_gpio);
 }
 
-hal::vbus::esp32s3::b2_1_v0_2v0_4_vbus::b2_1_v0_2v0_4_vbus(gpio_num_t gpio, esp_io_expander_handle_t expander, uint8_t expander_pin): _io_expander(expander), _gpio(gpio), _expander_gpio(expander_pin) {
+hal::vbus::esp32s3::b2_1_v0_2v0_4_vbus::b2_1_v0_2v0_4_vbus(const gpio_num_t gpio, esp_io_expander_handle_t expander, const uint8_t expander_pin): _io_expander(expander), _gpio(gpio), _expander_gpio(expander_pin) {
 
 
 }

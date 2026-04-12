@@ -85,12 +85,14 @@ bool lvgl_status = false;
 void lvgl_close() {
   LOGI(TAG, "Close");
   lvgl_status = false;
-  get_board()->GetDisplay()->onColorTransDone(nullptr);
+  auto *display = get_board()->GetDisplay();
+  display->onColorTransDone(nullptr);
   startInputTimer();
 
   destroy_screens();
   lv_obj_clean(lv_layer_top());
 
+  display->clear(); //Clear the display on close, as smaller images may not write the whole screen
   get_board()->PmRelease();
   LOGI(TAG, "Close Done");
 }
@@ -234,15 +236,15 @@ void touch_read(lv_indev_t *drv, lv_indev_data_t *data) {
   auto touch = static_cast<hal::touch::Touch *>(lv_indev_get_driver_data(drv));
   auto i = touch->read();
   if (i.state == hal::touch::TOUCH_PRESS) {
-    lv_timer_set_period(lv_indev_get_read_timer(lvgl_touch), 10);
+    // lv_timer_set_period(lv_indev_get_read_timer(lvgl_touch), 10);
     data->point.x = static_cast<int32_t>(i.position.first);
     data->point.y = static_cast<int32_t>(i.position.second);
     data->state = LV_INDEV_STATE_PRESSED;
   } else if (i.state == hal::touch::TOUCH_RELEASE){
-    lv_timer_set_period(lv_indev_get_read_timer(lvgl_touch), 10);
+    // lv_timer_set_period(lv_indev_get_read_timer(lvgl_touch), 10);
     data->state = LV_INDEV_STATE_RELEASED;
   } else {
-    lv_timer_set_period(lv_indev_get_read_timer(lvgl_touch), 100);
+    // lv_timer_set_period(lv_indev_get_read_timer(lvgl_touch), 100);
   }
 }
 
@@ -280,7 +282,7 @@ void lvgl_init(Boards::Board *board) {
     lv_indev_set_type(lvgl_touch, LV_INDEV_TYPE_POINTER);
     lv_indev_set_read_cb(lvgl_touch, touch_read);
     lv_indev_set_driver_data(lvgl_touch, board->GetTouch());
-    lv_timer_set_period(lv_indev_get_read_timer(lvgl_touch), 10);
+    lv_timer_set_period(lv_indev_get_read_timer(lvgl_touch), 33);
   }
 
 }

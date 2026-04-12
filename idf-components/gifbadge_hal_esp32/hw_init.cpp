@@ -43,8 +43,6 @@ Boards::Board *get_board() {
         global_board = new Boards::esp32::s3::mini::v0_3();
         break;
       case BOARD_2_1_V0_6:
-        global_board = new Boards::esp32::s3::full::v0_6();
-        break;
       case BOARD_2_1_V0_7:
           global_board = new Boards::esp32::s3::full::v0_6();
         break;

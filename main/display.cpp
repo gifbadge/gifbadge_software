@@ -21,9 +21,7 @@
 #include "dirname.h"
 #include "hash_path.h"
 #include "hw_init.h"
-#include <utime.h>
-#include "JPEGENC.h"
-#include "jpegenc.inl"
+#include "resize.h"
 
 static const char *TAG = "DISPLAY";
 
@@ -53,7 +51,7 @@ class ErrorImage : public Image {
     snprintf(_error, sizeof(_error) - 1, fmt, std::forward<Args>(args) ...);
   };
 
-  frameReturn GetFrame(uint8_t *outBuf, int16_t x, int16_t y, int16_t width) override {
+  frameReturn GetFrame(uint8_t *outBuf, int16_t x, int16_t y) override {
     for (int i = 0; i < resolution.first * resolution.second; i++) {
       reinterpret_cast<uint16_t *>(outBuf)[i] = 0x2966;
     }
@@ -95,28 +93,6 @@ class ResizingImage: public ErrorImage {
 
 static std::pair<int16_t, int16_t> lastSize = {0,0};
 
-static const char* lltoa(long long val, int base){
-
-  static char buf[64] = {0};
-
-  int i = 62;
-  int sign = (val < 0);
-  if(sign) val = -val;
-
-  if(val == 0) return "0";
-
-  for(; val && i ; --i, val /= base) {
-    buf[i] = "0123456789abcdef"[val % base];
-  }
-
-  if(sign) {
-    buf[i--] = '-';
-  }
-  return &buf[i+1];
-
-}
-
-
 bool newImage = false;
 
 int64_t average_frame_delay = 0;
@@ -140,7 +116,7 @@ static image::frameReturn displayFile(std::unique_ptr<image::Image> &in, hal::di
     xOffset = static_cast<int16_t>((display->size.first / 2) - ((in->Size().first +1) / 2));
     yOffset = static_cast<int16_t>((display->size.second / 2) - ((in->Size().second + 1) / 2));
   }
-  status = in->GetFrame(display->buffer, xOffset, yOffset, display->size.first);
+  status = in->GetFrame(display->buffer, xOffset, yOffset);
   if (status.first == image::frameStatus::ERROR) {
     LOGI(TAG, "Image loop error. Frame %d", frame_count);
     return {image::frameStatus::ERROR, 0};
@@ -163,7 +139,8 @@ static image::frameReturn displayFile(std::unique_ptr<image::Image> &in, hal::di
         LOGI(TAG, "Average FPS: %f", last_fps);
         LOGI(TAG, "FPS: %f", 1000.00f/(static_cast<float>(millis()-image_start)/static_cast<float>(frame_count)));
       }
-      LOGI(TAG, "Average Frame Delay: %s, Max Delay: %li", lltoa(average_frame_delay/frame_count, 10), max_frame_delay);
+      LOGI(TAG, "Average Frame Delay: %lld, Max Delay: %li", average_frame_delay/frame_count, max_frame_delay);
+
       frame_count = 0;
       average_frame_time = 0;
       average_frame_delay = 0;
@@ -174,7 +151,7 @@ static image::frameReturn displayFile(std::unique_ptr<image::Image> &in, hal::di
     return {status.first, (calc_delay > 0 ? calc_delay : 0)/portTICK_PERIOD_MS};
   }
   else{
-    LOGI(TAG, "Frame Time: %s", lltoa(millis()-start, 10), max_frame_delay);
+    LOGI(TAG, "Frame Time: %lld", millis()-start, max_frame_delay);
     return {image::frameStatus::END, portMAX_DELAY};
   }
 }
@@ -261,67 +238,6 @@ bool check_cache(const char *path, const char *cache_path) {
   return false;
 }
 
-
-static int32_t jpeg_read(JPEGE_FILE *p, uint8_t *buffer, int32_t length) {
-  const auto f = static_cast<FILE *>(p->fHandle);
-  return static_cast<int32_t>(fread(buffer, 1,length, f));
-}
-
-static int32_t jpeg_write(JPEGE_FILE *p, uint8_t *buffer, int32_t length) {
-  const auto f = static_cast<FILE *>(p->fHandle);
-  return static_cast<int32_t>(fwrite(buffer, 1, length, f));
-}
-
-static int32_t jpeg_seek(JPEGE_FILE *p, int32_t position) {
-  const auto f = static_cast<FILE *>(p->fHandle);
-  fseek(f, position, SEEK_SET);
-  return ftell(f);
-}
-
-int save_cache(const char *path, const char *cache_path, const uint8_t *buffer) {
-#ifdef ESP_PLATFORM
-  auto *_jpeg = static_cast<JPEGE_IMAGE *>(heap_caps_malloc(sizeof (JPEGE_IMAGE), MALLOC_CAP_SPIRAM));
-#else
-  auto *_jpeg = static_cast<JPEGE_IMAGE *>(malloc(sizeof (JPEGE_IMAGE)));
-#endif
-  JPEGENCODE jpe;
-  memset(_jpeg, 0, sizeof(JPEGE_IMAGE));
-  _jpeg->pfnRead = jpeg_read;
-  _jpeg->pfnWrite = jpeg_write;
-  _jpeg->pfnSeek = jpeg_seek;
-  _jpeg->JPEGFile.fHandle = fopen(cache_path, "w");
-  _jpeg->pHighWater = &_jpeg->ucFileBuf[JPEGE_FILE_BUF_SIZE - 512];
-  if (_jpeg->JPEGFile.fHandle == nullptr) {
-    return 1;
-  }
-  const int iWidth = get_board()->GetDisplay()->size.first, iHeight = get_board()->GetDisplay()->size.second;
-  if (JPEGEncodeBegin(_jpeg, &jpe, iWidth , iHeight, JPEGE_PIXEL_RGB565, JPEGE_SUBSAMPLE_444, JPEGE_Q_BEST) != JPEGE_SUCCESS) {
-    fclose(static_cast<FILE *>(_jpeg->JPEGFile.fHandle));
-    free(_jpeg);
-    return 1;
-  }
-  if (JPEGAddFrame(_jpeg, &jpe, const_cast<uint8_t *>(buffer) , iWidth*2) != JPEGE_SUCCESS) {
-    fclose(static_cast<FILE *>(_jpeg->JPEGFile.fHandle));
-    free(_jpeg);
-    return 1;
-  }
-  if (JPEGEncodeEnd(_jpeg) != JPEGE_SUCCESS) {
-    fclose(static_cast<FILE *>(_jpeg->JPEGFile.fHandle));
-    free(_jpeg);
-    return 1;
-  }
-  fclose(static_cast<FILE *>(_jpeg->JPEGFile.fHandle));
-  free(_jpeg);
-
-  struct stat f{};
-  utimbuf new_times{};
-  stat(path, &f);
-  new_times.actime = f.st_atime; /* keep atime unchanged */
-  new_times.modtime = f.st_mtime; /* set mtime to current time */
-  utime(cache_path, &new_times);
-  return 0;
-}
-
 static image::Image *openFile(const char *path, hal::display::Display *display) {
   image::Image *in = nullptr;
   char cache_path[128] = "";
@@ -347,7 +263,7 @@ static image::Image *openFile(const char *path, hal::display::Display *display) 
     if(size > display->size && in->resizable() == true) {
       int64_t start = millis();
       auto *resizing = new image::ResizingImage(display->size);
-      resizing->GetFrame(display->buffer, 0, 0, display->size.first);
+      resizing->GetFrame(display->buffer, 0, 0);
       display->write(0, 0, display->size.first, display->size.second, display->buffer);
       delete resizing;
       memset(display->buffer, 0, display->size.first*display->size.second*2);
@@ -358,7 +274,7 @@ static image::Image *openFile(const char *path, hal::display::Display *display) 
       if (save_cache(path, cache_path, display->buffer) != 0) {
         return new image::ErrorImage(display->size, "Error Saving Resized Image\n%s", path);
       }
-      LOGI(TAG, "Resizing time %s", lltoa(millis()-start, 10));
+      LOGI(TAG, "Resizing time %lld", millis()-start);
 
       delete in;
       in = ImageFactory(get_board()->GetDisplay()->size, cache_path);
@@ -515,6 +431,7 @@ void display_task(void *params) {
             continue;
           case DISPLAY_NOTIFY_USB:
             LOGD(TAG, "DISPLAY_NOTIFY_USB");
+            slideShowStop();
             delay = -1;
             closedir_sorted(&dir);
             dir.dirptr = nullptr;
@@ -531,6 +448,7 @@ void display_task(void *params) {
           case DISPLAY_MENU:
             delay = -1;
             LOGD("TAG", "Display menu");
+            slideShowStop();
             xTaskNotifyIndexed(lvglTask, 0, 0, eSetValueWithOverwrite);
             continue;
           default:

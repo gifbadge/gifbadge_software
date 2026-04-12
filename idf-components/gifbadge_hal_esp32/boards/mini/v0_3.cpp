@@ -6,7 +6,6 @@
 
 #include <esp_pm.h>
 #include "log.h"
-#include <driver/sdmmc_defs.h>
 #include <esp_task_wdt.h>
 #include <esp_sleep.h>
 #include <driver/rtc_io.h>
@@ -123,13 +122,15 @@ const char *esp32::s3::mini::v0_3::Name() {
 
 void esp32::s3::mini::v0_3::LateInit() {
   buffer = heap_caps_malloc(240 * 240 + 0x6100, MALLOC_CAP_INTERNAL);
-  i2c_master_bus_config_t i2c_mst_config = {
+  constexpr i2c_master_bus_config_t i2c_mst_config = {
     .i2c_port = I2C_NUM_0,
     .sda_io_num = GPIO_NUM_6,
     .scl_io_num = GPIO_NUM_7,
     .clk_source = I2C_CLK_SRC_DEFAULT,
     .glitch_ignore_cnt = 7,
-    .flags = {.enable_internal_pullup = false},
+    .intr_priority = 0,
+    .trans_queue_depth = 0,
+    .flags = {.enable_internal_pullup = false, .allow_pd = false},
   };
   ESP_ERROR_CHECK(i2c_new_master_bus(&i2c_mst_config, &bus_handle));
   _battery = new hal::battery::esp32s3::battery_max17048(bus_handle, GPIO_VBUS_DETECT);
@@ -148,7 +149,7 @@ void esp32::s3::mini::v0_3::LateInit() {
   gpio_isr_handler_add(GPIO_CARD_DETECT, sdcard_removed, nullptr);
   gpio_set_intr_type(GPIO_CARD_DETECT, GPIO_INTR_ANYEDGE);
 
-  esp_pm_config_t pm_config = {.max_freq_mhz = 240, .min_freq_mhz = 40, .light_sleep_enable = true};
+  constexpr esp_pm_config_t pm_config = {.max_freq_mhz = 240, .min_freq_mhz = 40, .light_sleep_enable = true};
   esp_pm_configure(&pm_config);
   esp_pm_lock_create(ESP_PM_CPU_FREQ_MAX, 0, "USB", &usb_pm);
 

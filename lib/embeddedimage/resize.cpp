@@ -97,7 +97,7 @@ void Resize::line(const int input_y, const uint16_t *buf) {
 
     auto [y_l, y_h] = calc_needed_rows(y);
 
-    const weight y_weight = static_cast<weight>(ratio * y) - y_l;
+    const weight y_weight = ratio * y - y_l;
 
     for (int i = 0; i < 2; i++) {
       if (rows[i].line == y_h) {
@@ -119,7 +119,7 @@ void Resize::line(const int input_y, const uint16_t *buf) {
       x_h = std::max(0, x_h);
       x_h = std::min(input_width - 1, x_h);
 
-      const weight x_weight = static_cast<weight>(ratio * x) - x_l;
+      const weight x_weight = ratio * x - x_l;
 
       const uint16_t a = rows[row_l].data[x_l];
       const uint16_t b = rows[row_l].data[x_h];

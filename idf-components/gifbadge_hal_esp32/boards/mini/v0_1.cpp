@@ -6,7 +6,6 @@
 
 #include <esp_pm.h>
 #include "log.h"
-#include <driver/sdmmc_defs.h>
 #include <esp_task_wdt.h>
 #include <esp_sleep.h>
 #include "boards/mini/v0_1.h"
@@ -39,9 +38,7 @@ static void IRAM_ATTR usb_connected(void *) {
 
 namespace Boards {
 
-esp32::s3::mini::v0_1::v0_1() {
-
-}
+esp32::s3::mini::v0_1::v0_1() = default;
 
 hal::battery::Battery *esp32::s3::mini::v0_1::GetBattery() {
   return _battery;
@@ -98,13 +95,15 @@ const char *esp32::s3::mini::v0_1::Name() {
 
 void esp32::s3::mini::v0_1::LateInit() {
   // buffer = heap_caps_malloc(240 * 240 + 0x6100, MALLOC_CAP_INTERNAL);
-  i2c_master_bus_config_t i2c_mst_config = {
+  constexpr i2c_master_bus_config_t i2c_mst_config = {
     .i2c_port = I2C_NUM_0,
     .sda_io_num = GPIO_NUM_17,
     .scl_io_num = GPIO_NUM_18,
     .clk_source = I2C_CLK_SRC_DEFAULT,
     .glitch_ignore_cnt = 7,
-    .flags = {.enable_internal_pullup = false},
+    .intr_priority = 0,
+    .trans_queue_depth = 0,
+    .flags = {.enable_internal_pullup = false, .allow_pd = true},
   };
   ESP_ERROR_CHECK(i2c_new_master_bus(&i2c_mst_config, &bus_handle));
   _battery = new hal::battery::esp32s3::battery_max17048(bus_handle, GPIO_VBUS_DETECT);
@@ -115,7 +114,7 @@ void esp32::s3::mini::v0_1::LateInit() {
   _backlight = new hal::backlight::esp32s3::backlight_ledc(GPIO_NUM_9, false, 0);
   _backlight->setLevel(100);
 
-  esp_pm_config_t pm_config = {.max_freq_mhz = 240, .min_freq_mhz = 40, .light_sleep_enable = true};
+  constexpr esp_pm_config_t pm_config = {.max_freq_mhz = 240, .min_freq_mhz = 40, .light_sleep_enable = true};
   esp_pm_configure(&pm_config);
 
   esp_sleep_enable_gpio_wakeup();

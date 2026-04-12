@@ -14,7 +14,7 @@ class bmpImage: public Image {
     explicit bmpImage(screenResolution res, const char *path): Image(res, path) {};
     ~bmpImage() override;
 
-    frameReturn GetFrame(uint8_t *outBuf, int16_t x, int16_t y, int16_t width) override;
+    frameReturn GetFrame(uint8_t *outBuf, int16_t x, int16_t y) override;
     std::pair<int16_t, int16_t> Size() override;
     int Open(void *buffer) override;
     bool Animated() override;

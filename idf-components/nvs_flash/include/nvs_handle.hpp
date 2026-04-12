@@ -1,5 +1,9 @@
-#ifndef NVS_HANDLE_HPP_
-#define NVS_HANDLE_HPP_
+/*
+ * SPDX-FileCopyrightText: 2019-2025 Espressif Systems (Shanghai) CO LTD
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+#pragma once
 
 #include <string>
 #include <memory>
@@ -8,6 +12,18 @@
 #include "nvs.h"
 
 namespace nvs {
+
+#if defined(SEGGER_H) && defined(GLOBAL_H)
+NVS_GUARD_SYSVIEW_MACRO_EXPANSION_PUSH();
+#undef U8
+#undef I8
+#undef U16
+#undef I16
+#undef U32
+#undef I32
+#undef U64
+#undef I64
+#endif
 
 /**
  * The possible blob types. This is a helper definition for template functions.
@@ -28,6 +44,9 @@ enum class ItemType : uint8_t {
     ANY  = NVS_TYPE_ANY
 };
 
+#if defined(SEGGER_H) && defined(GLOBAL_H)
+NVS_GUARD_SYSVIEW_MACRO_EXPANSION_POP();
+#endif
 
 /**
  * @brief A handle allowing nvs-entry related operations on the NVS.
@@ -224,7 +243,7 @@ protected:
 /**
  * @brief Opens non-volatile storage and returns a handle object.
  *
- * The handle is automatically closed on desctruction. The scope of the handle is the namespace ns_name
+ * The handle is automatically closed on destruction. The scope of the handle is the namespace ns_name
  * in a particular partition partition_name.
  * The parameters partition_name, ns_name and open_mode have the same meaning and restrictions as the parameters
  * part_name, name and open_mode in \ref nvs_open_from_partition, respectively.
@@ -292,5 +311,3 @@ esp_err_t NVSHandle::get_item(const char *key, T &value) {
 }
 
 } // nvs
-
-#endif // NVS_HANDLE_HPP_

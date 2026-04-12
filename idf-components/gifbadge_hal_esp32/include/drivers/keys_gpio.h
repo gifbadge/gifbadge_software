@@ -24,13 +24,13 @@ class keys_gpio : public hal::keys::Keys {
   void poll();
 
  private:
-  gpio_num_t buttonConfig[KEY_MAX];
+  gpio_num_t buttonConfig[KEY_MAX]{};
 
-  zmk_debounce_state _debounce_states[KEY_MAX];
+  zmk_debounce_state _debounce_states[KEY_MAX]{};
   zmk_debounce_config _debounce_config = {10, 10};
   esp_timer_handle_t keyTimer = nullptr;
 
-  EVENT_STATE _currentState[KEY_MAX];
+  EVENT_STATE _currentState[KEY_MAX]{};
 
 
   long long last;

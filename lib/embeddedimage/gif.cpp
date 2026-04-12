@@ -61,7 +61,7 @@ static int32_t SeekFile(GIFFILE *pFile, int32_t iPosition) {
   return 0;
 }
 
-image::GIF::GIF(screenResolution res, const char *path):Image(res, path) {};
+image::GIF::GIF(screenResolution res, const char *path):Image(res, path) {}
 
 image::GIF::~GIF() {
   if (_gif.pFrameBuffer != nullptr) {
@@ -71,8 +71,8 @@ image::GIF::~GIF() {
   (*_gif.pfnClose)(_gif.GIFFile.fHandle);
 }
 
-image::frameReturn image::GIF::GetFrame(uint8_t *outBuf, int16_t x, int16_t y, int16_t width) {
-  GIFUser gifuser = {outBuf, x, y, width};
+image::frameReturn image::GIF::GetFrame(uint8_t *outBuf, int16_t x, int16_t y) {
+  GIFUser gifuser = {outBuf, x, y, resolution.first};
   int frameDelay;
   if (_gif.GIFFile.iPos >= _gif.GIFFile.iSize - 1) // no more data exists
   {
@@ -139,7 +139,7 @@ void image::GIF::GIFDraw(GIFDRAW *pDraw) {
 }
 
 image::Image *image::GIF::Create(screenResolution res, const char *path) {
-  return new image::GIF(res, path);
+  return new GIF(res, path);
 }
 
 int image::GIF::Open(void *buffer) {
@@ -185,7 +185,6 @@ int image::GIF::Open(void *buffer) {
       return -1;
     }
     _gif.ucDrawType = GIF_DRAW_COOKED;
-    width = _gif.iCanvasWidth;
     return 0;
   }
   return -1;

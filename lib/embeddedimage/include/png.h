@@ -26,7 +26,7 @@ class PNGImage : public image::Image {
 
     ~PNGImage() override;
 
-  frameReturn GetFrame(uint8_t *outBuf, int16_t x, int16_t y, int16_t width) override;
+  frameReturn GetFrame(uint8_t *outBuf, int16_t x, int16_t y) override;
 
     std::pair<int16_t, int16_t> Size() override;
 

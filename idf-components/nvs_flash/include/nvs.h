@@ -1,10 +1,9 @@
 /*
- * SPDX-FileCopyrightText: 2015-2023 Espressif Systems (Shanghai) CO LTD
+ * SPDX-FileCopyrightText: 2015-2025 Espressif Systems (Shanghai) CO LTD
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-#ifndef ESP_NVS_H
-#define ESP_NVS_H
+#pragma once
 
 #include <stdint.h>
 #include <stddef.h>
@@ -60,6 +59,26 @@ typedef nvs_handle_t nvs_handle IDF_DEPRECATED("Replace with nvs_handle_t");
 #define NVS_PART_NAME_MAX_SIZE              16   /*!< maximum length of partition name (excluding null terminator) */
 #define NVS_KEY_NAME_MAX_SIZE               16   /*!< Maximum length of NVS key name (including null terminator) */
 #define NVS_NS_NAME_MAX_SIZE                NVS_KEY_NAME_MAX_SIZE /*!< Maximum length of NVS namespace name (including null terminator) */
+
+#define NVS_GUARD_SYSVIEW_MACRO_EXPANSION_PUSH() \
+_Pragma("push_macro(\"U8\")") \
+_Pragma("push_macro(\"I8\")") \
+_Pragma("push_macro(\"U16\")") \
+_Pragma("push_macro(\"I16\")") \
+_Pragma("push_macro(\"U32\")") \
+_Pragma("push_macro(\"I32\")") \
+_Pragma("push_macro(\"U64\")") \
+_Pragma("push_macro(\"I64\")")
+
+#define NVS_GUARD_SYSVIEW_MACRO_EXPANSION_POP() \
+_Pragma("pop_macro(\"U8\")") \
+_Pragma("pop_macro(\"I8\")") \
+_Pragma("pop_macro(\"U16\")") \
+_Pragma("pop_macro(\"I16\")") \
+_Pragma("pop_macro(\"U32\")") \
+_Pragma("pop_macro(\"I32\")") \
+_Pragma("pop_macro(\"U64\")") \
+_Pragma("pop_macro(\"I64\")")
 
 /**
  * @brief Mode of opening the non-volatile storage
@@ -782,5 +801,3 @@ void nvs_release_iterator(nvs_iterator_t iterator);
 #ifdef __cplusplus
 } // extern "C"
 #endif
-
-#endif //ESP_NVS_H

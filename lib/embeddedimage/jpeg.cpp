@@ -5,18 +5,15 @@
  ******************************************************************************/
 
 #include "jpeg.h"
-#include <string>
-
 #include "bitbank2.h"
 #include "png.h"
 #include "image.h"
 #include "resize.h"
-#include "simplebmp.h"
 
 bool image::JPEG::resizable() {
-  // if (_buffer) {
-  //   return true;
-  // }
+  if (_buffer) {
+    return true;
+  }
   return false;
 }
 
@@ -29,7 +26,7 @@ std::pair<int16_t, int16_t> image::JPEG::Size() {
 }
 
 image::Image *image::JPEG::Create(screenResolution res, const char *path) {
-    return new image::JPEG(res, path);
+    return new JPEG(res, path);
 }
 
 int JPEGDraw(JPEGDRAW *pDraw){
@@ -62,18 +59,18 @@ int image::JPEG::Open(void *buffer) {
   return ret==0; //Invert the return value
 }
 
-image::frameReturn image::JPEG::GetFrame(uint8_t *outBuf, int16_t x, int16_t y, int16_t width) {
+image::frameReturn image::JPEG::GetFrame(uint8_t *outBuf, int16_t x, int16_t y) {
   if (decoded) {
     jpeg.close();
     jpeg.open(_path, bb2OpenFile, bb2CloseFile, (readfile)bb2ReadFile, (seekfile)bb2SeekFile, JPEGDraw);
     jpeg.setPixelType(RGB565_LITTLE_ENDIAN);
   }
   decoded = true;
-  pnguser config = {.png = nullptr, .buffer = outBuf, .x = x, .y = y, .width = width};
+  pnguser config = {.png = nullptr, .buffer = outBuf, .x = x, .y = y, .width = resolution.first};
   jpeg.setUserPointer(&config);
   jpeg.decode(0, 0, 0);
   _lastError = jpeg.getLastError();
-  return {image::frameStatus::END, 0};
+  return {frameStatus::END, 0};
 }
 
 const char * image::JPEG::GetLastError() {
@@ -92,7 +89,7 @@ const char * image::JPEG::GetLastError() {
         return "JPEG_PROGRESSIVE_NOT_SUPPORTED";
       default:
         return "UNKNOWN";
-    };
+    }
 }
 
 struct jpgresize {
@@ -124,9 +121,31 @@ int image::JPEG::resize(uint8_t *outBuf, int16_t x_start, int16_t y_start, int16
   jpeg.setPixelType(RGB565_LITTLE_ENDIAN);
   memset(outBuf, 0, sizeof(x*y*2));
 
-  Resize resize(jpeg.getWidth(), jpeg.getHeight(), x, y, reinterpret_cast<uint16_t *>(outBuf), static_cast<uint8_t *>(_buffer)+64*1024);
+  int decoderOptions = 0;
+  float ratio = 0.00;
+  int width = 0, height = 0;
+  if (jpeg.getWidth() > jpeg.getHeight()) {
+    ratio = static_cast<float>(x) / static_cast<float>(jpeg.getWidth());
+  } else {
+    ratio = static_cast<float>(y)/ static_cast<float>(jpeg.getHeight());
+  }
+  if (ratio < 0.15) {
+    decoderOptions = JPEG_SCALE_EIGHTH;
+    width = jpeg.getWidth()*0.15;
+    height = jpeg.getHeight()*0.15;
+  } else if (ratio < 0.25) {
+    decoderOptions = JPEG_SCALE_QUARTER;
+    width = jpeg.getWidth()*0.25;
+    height = jpeg.getHeight()*0.25;
+  } else if (ratio < 0.5) {
+    decoderOptions = JPEG_SCALE_HALF;
+    width = jpeg.getWidth()*0.5;
+    height = jpeg.getHeight()*0.5;
+  }
+
+  Resize resize(width, height, x, y, reinterpret_cast<uint16_t *>(outBuf), static_cast<uint8_t *>(_buffer)+64*1024);
   decoded = true;
-  jpgresize config = {static_cast<uint16_t *>(_buffer), jpeg.getWidth(), jpeg.getHeight(), &resize, 0};
+  jpgresize config = {static_cast<uint16_t *>(_buffer), width, height, &resize, 0};
   jpeg.setUserPointer(&config);
-  return jpeg.decode(0, 0, 0)==0;
+  return jpeg.decode(0, 0, decoderOptions)==0;
   }

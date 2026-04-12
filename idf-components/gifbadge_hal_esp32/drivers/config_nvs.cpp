@@ -5,7 +5,6 @@
  ******************************************************************************/
 
 #include <nvs_flash.h>
-#include "log.h"
 #include "drivers/config_nvs.h"
 
 hal::config::esp32s3::Config_NVS::Config_NVS(Boards::Board *board): _board(board) {
@@ -22,15 +21,15 @@ hal::config::esp32s3::Config_NVS::Config_NVS(Boards::Board *board): _board(board
 }
 
 template<typename T>
-T hal::config::esp32s3::Config_NVS::get_item_or_default(const char *item, T value) {
+T hal::config::esp32s3::Config_NVS::get_item_or_default(const char *key, T value) {
   esp_err_t err;
   T ret;
-  err = handle->get_item(item, ret);
+  err = handle->get_item(key, ret);
   switch (err) {
     case ESP_OK:
       return ret;
     case ESP_ERR_NVS_NOT_FOUND:
-      handle->set_item(item, value);
+      handle->set_item(key, value);
       handle->commit();
       return value;
     default :
@@ -38,7 +37,7 @@ T hal::config::esp32s3::Config_NVS::get_item_or_default(const char *item, T valu
   }
 }
 
-void hal::config::esp32s3::Config_NVS::get_string_or_default(const char *item, const char *default_value, char *out, size_t out_len) {
+void hal::config::esp32s3::Config_NVS::get_string_or_default(const char *item, const char *default_value, char *out, size_t out_len) const {
   if (handle->get_string(item, out, out_len) == ESP_ERR_NVS_NOT_FOUND) {
     handle->set_string(item, default_value);
     handle->commit();
@@ -51,10 +50,10 @@ void hal::config::esp32s3::Config_NVS::setPath(const char *path) {
 }
 
 void hal::config::esp32s3::Config_NVS::getPath(char *outPath) {
-  get_string_or_default("path", (const char *) "/data", outPath, 128);
+  get_string_or_default("path", "/data", outPath, 128);
 }
 
-void hal::config::esp32s3::Config_NVS::setLocked(bool locked) {
+void hal::config::esp32s3::Config_NVS::setLocked(const bool locked) {
   handle->set_item("locked", locked);
 }
 
@@ -66,7 +65,7 @@ bool hal::config::esp32s3::Config_NVS::getSlideShow() {
   return get_item_or_default("slideshow", false);
 }
 
-void hal::config::esp32s3::Config_NVS::setSlideShow(bool slideshow) {
+void hal::config::esp32s3::Config_NVS::setSlideShow(const bool slideshow) {
   handle->set_item("slideshow", slideshow);
 }
 
@@ -74,7 +73,7 @@ int hal::config::esp32s3::Config_NVS::getSlideShowTime() {
   return get_item_or_default("slideshow_time", 15);
 }
 
-void hal::config::esp32s3::Config_NVS::setSlideShowTime(int slideshow_time) {
+void hal::config::esp32s3::Config_NVS::setSlideShowTime(const int slideshow_time) {
   handle->set_item("slideshow_time", slideshow_time);
 }
 
@@ -82,7 +81,7 @@ int hal::config::esp32s3::Config_NVS::getBacklight(){
   return get_item_or_default("backlight", 10);
 }
 
-void hal::config::esp32s3::Config_NVS::setBacklight(int backlight) {
+void hal::config::esp32s3::Config_NVS::setBacklight(const int backlight) {
   handle->set_item("backlight", backlight);
 }
 
@@ -94,12 +93,12 @@ void hal::config::esp32s3::Config_NVS::save() {
   handle->commit();
 
 }
-void hal::config::esp32s3::Config_NVS::getCard(cards card, char *path) {
+void hal::config::esp32s3::Config_NVS::getCard(const cards card, char *path) {
   char card_str[8];
   snprintf(card_str, sizeof(card_str), "card_%0d", static_cast<int>(card));
   get_string_or_default(card_str, "", path, 128);
 }
-void hal::config::esp32s3::Config_NVS::setCard(cards card, const char *path) {
+void hal::config::esp32s3::Config_NVS::setCard(const cards card, const char *path) {
   char card_str[8];
   snprintf(card_str, sizeof(card_str), "card_%0d", static_cast<int>(card));
   handle->set_string(card_str, path);

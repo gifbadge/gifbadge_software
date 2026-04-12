@@ -8,7 +8,6 @@
 
 #include <esp_pm.h>
 #include "log.h"
-#include <driver/sdmmc_defs.h>
 #include <driver/rtc_io.h>
 #include <esp_sleep.h>
 #include <driver/i2c_master.h>
@@ -18,7 +17,6 @@
 #include "esp_efuse_custom_table.h"
 
 
-// #define USB_ENABLE
 
 static const char *TAG = "Board::esp32::s3::full::v0_6";
 
@@ -32,13 +30,15 @@ esp32::s3::full::v0_6::v0_6() {
   _config = new hal::config::esp32s3::Config_NVS(this);
   gpio_install_isr_service(0);
 
-  i2c_master_bus_config_t i2c_mst_config = {
+  constexpr i2c_master_bus_config_t i2c_mst_config = {
     .i2c_port = I2C_NUM_0,
     .sda_io_num = GPIO_NUM_47,
     .scl_io_num = GPIO_NUM_48,
     .clk_source = I2C_CLK_SRC_DEFAULT,
     .glitch_ignore_cnt = 7,
-    .flags = {.enable_internal_pullup = false},
+    .intr_priority = 0,
+    .trans_queue_depth = 0,
+    .flags = {.enable_internal_pullup = false, .allow_pd = false},
   };
   ESP_ERROR_CHECK(i2c_new_master_bus(&i2c_mst_config, &bus_handle));
 
@@ -144,7 +144,7 @@ void esp32::s3::full::v0_6::LateInit() {
 
   esp_io_expander_new_gpio(_cs, &_io_expander);
 
-  spi_line_config_t line_config = {
+  const spi_line_config_t line_config = {
       .cs_io_type = IO_TYPE_EXPANDER,             // Set to `IO_TYPE_GPIO` if using GPIO, same to below
       .cs_gpio_num = 1,
       .scl_io_type = IO_TYPE_GPIO,
@@ -173,7 +173,7 @@ void esp32::s3::full::v0_6::LateInit() {
 
 
   //TODO: Check if we can use DFS with the RGB LCD
-  esp_pm_config_t pm_config = {.max_freq_mhz = 240, .min_freq_mhz = 80, .light_sleep_enable = false};
+  constexpr esp_pm_config_t pm_config = {.max_freq_mhz = 240, .min_freq_mhz = 80, .light_sleep_enable = false};
   esp_pm_configure(&pm_config);
 
   _pmic->EnableADC();
@@ -190,7 +190,7 @@ void esp32::s3::full::v0_6::LateInit() {
 
 }
 WakeupSource esp32::s3::full::v0_6::BootReason() {
-  LOGI(TAG, "esp_reset_reason() %i", esp_reset_reason());
+  LOGD(TAG, "esp_reset_reason() %i", esp_reset_reason());
   if (_pmic->GetWakeup() != WakeupSource::NONE) {
     return _pmic->GetWakeup();
   }
@@ -215,7 +215,7 @@ char *esp32::s3::full::v0_6::SerialNumber() {
   if (sn == 0x00) {
     esp_efuse_read_field_blob(ESP_EFUSE_KEY0_SERIAL, &sn, 64);
   }
-  sprintf(serial, "%s", lltoa(sn, 10));
+  sprintf(serial, "%lld", sn);
   return serial;
 }
 }

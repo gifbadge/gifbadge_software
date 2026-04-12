@@ -98,7 +98,9 @@ static void initLowBatteryTask() {
   xTimerStart(xTimerCreate("low_battery_handler", 10000/portTICK_PERIOD_MS, pdTRUE, nullptr, lowBatteryTask),0);
 }
 
-#ifdef ESP_PLATFORM
+#if defined(ESP_PLATFORM)
+#include <sdkconfig.h>
+#if CONFIG_TINYUSB_MSC_ENABLED
 static void usbCall(tinyusb_msc_storage_handle_t handle, tinyusb_msc_event_t *e, void *arg){
   LOGI(TAG, "USB Event %d", e->id);
   if (e->id != TINYUSB_MSC_EVENT_MOUNT_COMPLETE) {
@@ -120,6 +122,7 @@ static void usbCall(tinyusb_msc_storage_handle_t handle, tinyusb_msc_event_t *e,
     }
   }
 }
+#endif
 #endif
 
 
@@ -167,8 +170,8 @@ extern "C" void app_main(void) {
 
 
 #ifdef ESP_PLATFORM
-  xTaskCreatePinnedToCore(display_task, "display_task", 4000, board, 2, &display_task_handle, 1);
-  xTaskCreatePinnedToCore(FileBufferTask, "file_buffer", 2000, &buffer_size, 2, &file_buffer_task, 0);
+  xTaskCreatePinnedToCore(display_task, "display_task", 6000, board, 2, &display_task_handle, 1);
+  xTaskCreatePinnedToCore(FileBufferTask, "file_buffer", 4000, &buffer_size, 2, &file_buffer_task, 0);
 #else
   xTaskCreate(display_task, "display_task", 5000, board, 2, &display_task_handle);
   xTaskCreate(FileBufferTask, "file_buffer", 4000, &buffer_size, 2, &file_buffer_task);
@@ -182,11 +185,11 @@ extern "C" void app_main(void) {
     return;
   }
 
-#ifdef ESP_PLATFORM
+#if defined(ESP_PLATFORM) && defined(CONFIG_TINYUSB_MSC_ENABLED)
   board->UsbCallBack(&usbCall);
 #endif
 
-  // vTaskDelay(500 / portTICK_PERIOD_MS);
+  vTaskDelay(500 / portTICK_PERIOD_MS);
 
   if(!board->UsbConnected()){
     xTaskNotifyIndexed(display_task_handle, 0, DISPLAY_FILE, eSetValueWithOverwrite);

@@ -22,7 +22,7 @@ class JPEG : public image::Image {
 
     ~JPEG() override;
 
-  frameReturn GetFrame(uint8_t *outBuf, int16_t x, int16_t y, int16_t width) override;
+  frameReturn GetFrame(uint8_t *outBuf, int16_t x, int16_t y) override;
 
     std::pair<int16_t, int16_t> Size() override;
 
@@ -37,10 +37,10 @@ class JPEG : public image::Image {
     int resize(uint8_t *outBuf, int16_t x_start, int16_t y_start, int16_t x, int16_t y) override;
 
 private:
-    JPEGDEC jpeg;
+    JPEGDEC jpeg{};
     bool decoded = false;
     int _lastError = 0;
-    void *_buffer;
+    void *_buffer{};
 };
 }
 

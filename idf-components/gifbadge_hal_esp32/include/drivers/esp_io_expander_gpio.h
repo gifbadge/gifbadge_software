@@ -6,9 +6,6 @@
 
 #pragma once
 
-#include <stdint.h>
-
-#include "driver/i2c.h"
 #include "esp_err.h"
 
 #include "esp_io_expander.h"

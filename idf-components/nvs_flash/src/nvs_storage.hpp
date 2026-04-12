@@ -1,10 +1,9 @@
 /*
- * SPDX-FileCopyrightText: 2015-2022 Espressif Systems (Shanghai) CO LTD
+ * SPDX-FileCopyrightText: 2015-2025 Espressif Systems (Shanghai) CO LTD
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-#ifndef nvs_storage_hpp
-#define nvs_storage_hpp
+#pragma once
 
 #include <memory>
 #include <cstdlib>
@@ -48,6 +47,9 @@ class Storage : public intrusive_list_node<Storage>, public ExceptionlessAllocat
             uint8_t nsIndex;
             uint8_t chunkCount;
             VerOffset chunkStart;
+            size_t dataSize;
+            size_t observedDataSize;
+            size_t observedChunkCount;
     };
 
     typedef intrusive_list<BlobIndexNode> TBlobIndexList;
@@ -144,11 +146,13 @@ protected:
 
     esp_err_t populateBlobIndices(TBlobIndexList&);
 
+    void eraseMismatchedBlobIndexes(TBlobIndexList&);
+
     void eraseOrphanDataBlobs(TBlobIndexList&);
 
     void fillEntryInfo(Item &item, nvs_entry_info_t &info);
 
-    esp_err_t findItem(uint8_t nsIndex, ItemType datatype, const char* key, Page* &page, Item& item, uint8_t chunkIdx = Page::CHUNK_ANY, VerOffset chunkStart = VerOffset::VER_ANY);
+    esp_err_t findItem(uint8_t nsIndex, ItemType datatype, const char* key, Page* &page, Item& item, uint8_t chunkIdx = Page::CHUNK_ANY, VerOffset chunkStart = VerOffset::VER_ANY, size_t* itemIndex = NULL);
 
 protected:
     Partition *mPartition;
@@ -170,5 +174,3 @@ struct nvs_opaque_iterator_t
     intrusive_list<nvs::Page>::iterator page;
     nvs_entry_info_t entry_info;
 };
-
-#endif /* nvs_storage_hpp */

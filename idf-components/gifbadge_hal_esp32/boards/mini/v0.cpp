@@ -13,6 +13,7 @@
 
 #include "boards/mini/v0.h"
 
+#include <esp_flash.h>
 #include <esp_flash_spi_init.h>
 #include <log.h>
 #include <tinyusb.h>
@@ -84,8 +85,15 @@ static const esp_partition_t* int_ext_flash_hw(int mosi, int miso, int sclk, int
   const spi_bus_config_t bus_config =
       {.mosi_io_num = mosi, .miso_io_num = miso, .sclk_io_num = sclk, .quadwp_io_num = -1, .quadhd_io_num = -1, .data4_io_num = -1, .data5_io_num = -1, .data6_io_num = -1, .data7_io_num = -1, .data_io_default_level = false, .max_transfer_sz = SPI_MAX_DMA_LEN, .flags = 0, .isr_cpu_id = ESP_INTR_CPU_AFFINITY_AUTO, .intr_flags = 0,};
 
-  const esp_flash_spi_device_config_t
-      device_config = {.host_id = SPI3_HOST, .cs_io_num = cs, .io_mode = SPI_FLASH_DIO, .input_delay_ns = 0, .cs_id = 0, .freq_mhz = 40};
+  const esp_flash_spi_device_config_t device_config = {
+    .host_id = SPI3_HOST,
+    .cs_io_num = cs,
+    .io_mode = SPI_FLASH_DIO,
+    .input_delay_ns = 0,
+    .cs_id = 0,
+    .freq_mhz = 40,
+    .clock_source = SPI_CLK_SRC_DEFAULT
+  };
 
   LOGI(TAG, "Initializing external SPI Flash");
   LOGI(TAG, "Pin assignments:");
@@ -111,20 +119,18 @@ static const esp_partition_t* int_ext_flash_hw(int mosi, int miso, int sclk, int
 
   // Print out the ID and size
   uint32_t id;
+  uint32_t flash_size;
   ESP_ERROR_CHECK(esp_flash_read_id(ext_flash, &id));
-  LOGI(TAG, "Initialized external Flash, size=%" PRIu32 " KB, ID=0x%" PRIx32, ext_flash->size / 1024, id);
-  uint32_t size;
-  esp_flash_get_physical_size(ext_flash, &size);
-  LOGI(TAG, "Flash Size %" PRIu32 " KB", size);
-
+  ESP_ERROR_CHECK(esp_flash_get_size(ext_flash, &flash_size));
+  LOGI(TAG, "Initialized external Flash, size=%" PRIu32 " KB, ID=0x%" PRIx32, flash_size / 1024, id);
   LOGI(TAG,
            "Adding external Flash as a partition, label=\"%s\", size=%" PRIu32 " KB",
            "ext_data",
-           ext_flash->size / 1024);
+           flash_size / 1024);
   const esp_partition_t *fat_partition;
   ESP_ERROR_CHECK(esp_partition_register_external(ext_flash,
                                                   0,
-                                                  ext_flash->size,
+                                                  flash_size,
                                                   "ext_data",
                                                   ESP_PARTITION_TYPE_DATA,
                                                   ESP_PARTITION_SUBTYPE_DATA_FAT,
@@ -138,13 +144,16 @@ void esp32::s3::mini::v0::LateInit() {
   const esp_partition_t *fat_partition = int_ext_flash_hw(39, 41, 40, 42);
   ESP_ERROR_CHECK(wl_mount(fat_partition, &wl_handle));
 
+#if !CONFIG_TINYUSB_MSC_ENABLED
   const esp_vfs_fat_mount_config_t mount_config = {
       .format_if_mount_failed = true,
       .max_files = 4,
       .allocation_unit_size = CONFIG_WL_SECTOR_SIZE,
+      .disk_status_check_enable = true,
+      .use_one_fat = false,
   };
-  // ESP_ERROR_CHECK(esp_vfs_fat_spiflash_mount_rw_wl("/data", "ext_data", &mount_config, &wl_handle));
-
+  ESP_ERROR_CHECK(esp_vfs_fat_spiflash_mount_rw_wl("/data", "ext_data", &mount_config, &wl_handle));
+#else
   const tinyusb_msc_storage_config_t
       config_spi = {
         .medium = {wl_handle}, .fat_fs = {
@@ -159,18 +168,18 @@ void esp32::s3::mini::v0::LateInit() {
       };
 
   ESP_ERROR_CHECK(tinyusb_msc_new_storage_spiflash(&config_spi, &storage_handle));
-
+#endif
   esp32s3_usb_init(GPIO_NUM_NC);
 #if CFG_TUD_CDC
   tinyusb_console_init(TINYUSB_CDC_ACM_0);
 #endif
 
-  esp_pm_config_t pm_config = {.max_freq_mhz = 240, .min_freq_mhz = 240, .light_sleep_enable = false};
+  constexpr esp_pm_config_t pm_config = {.max_freq_mhz = 240, .min_freq_mhz = 240, .light_sleep_enable = false};
   esp_pm_configure(&pm_config);
 }
 
 bool esp32::s3::mini::v0::UsbConnected() {
-#ifndef USB_DISABLED
+#if CONFIG_TINYUSB_MSC_ENABLED
   tinyusb_msc_mount_point_t mount_status;
   tinyusb_msc_get_storage_mount_point(storage_handle, &mount_status);
   return mount_status == TINYUSB_MSC_STORAGE_MOUNT_USB;
@@ -178,8 +187,10 @@ bool esp32::s3::mini::v0::UsbConnected() {
   return false;
 #endif
 }
-int esp32::s3::mini::v0::UsbCallBack(tusb_msc_callback_t callback) {
+int esp32::s3::mini::v0::UsbCallBack(const tusb_msc_callback_t callback) {
+#if CONFIG_TINYUSB_MSC_ENABLED
   tinyusb_msc_set_storage_callback(callback, nullptr);
+#endif
   return 0;
 }
 

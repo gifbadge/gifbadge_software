@@ -10,7 +10,7 @@ set(CXX_EXTENSIONS ON)
 target_compile_options(npmx PUBLIC -DNPM1300)
 
 if(ESP_PLATFORM)
-    target_link_libraries(npmx PRIVATE idf::newlib)
+    target_link_libraries(npmx PRIVATE idf::esp_libc)
 else ()
 #    include(CTest)
 #    add_subdirectory(test)

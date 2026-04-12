@@ -53,5 +53,3 @@ class esp32s3 : public Board {
     esp_err_t esp32s3_usb_init(gpio_num_t usb_sense);
 };
 }
-
-const char *lltoa(long long val, int base);

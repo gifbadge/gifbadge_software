@@ -1,10 +1,4 @@
 /*******************************************************************************
- * Copyright (c) 2026 GifBadge
- *
- * SPDX-License-Identifier:   GPL-3.0-or-later
- ******************************************************************************/
-
-/*******************************************************************************
  * Size: 180 px
  * Bpp: 1
  * Opts: --bpp 1 --size 180 --format lvgl --lv-include lvgl.h --font MaterialSymbolsOutlined[FILL,GRAD,opsz,wght].ttf -r0xe1e0,0xe3f4,0xe8d7,0xf057,0xe19c -o main/ui/fonts//material_icons_special.c

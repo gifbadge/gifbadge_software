@@ -47,10 +47,10 @@ hal::config::Config *esp32s3::GetConfig() {
 }
 
 void esp32s3::DebugInfo() {
-  ESP_LOGI(TAG, "Free Heap: %d", esp_get_free_heap_size());
-  ESP_LOGI(TAG, "Free PSRAM: %d", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
-  ESP_LOGI(TAG, "Free Internal: %d", heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
-  ESP_LOGI(TAG, "Largest Free Block for DMA: %d", heap_caps_get_largest_free_block(MALLOC_CAP_DMA));
+  ESP_LOGI(TAG, "Free Heap: %db", esp_get_free_heap_size());
+  ESP_LOGI(TAG, "Free PSRAM: %db/%db", heap_caps_get_free_size(MALLOC_CAP_SPIRAM), heap_caps_get_total_size(MALLOC_CAP_SPIRAM));
+  ESP_LOGI(TAG, "Free Internal: %db/%db", heap_caps_get_free_size(MALLOC_CAP_INTERNAL), heap_caps_get_total_size(MALLOC_CAP_INTERNAL));
+  ESP_LOGI(TAG, "Largest Free Block for DMA: %db", heap_caps_get_largest_free_block(MALLOC_CAP_DMA));
   ESP_LOGI(TAG, "USB State: %d", UsbConnected());
 }
 
@@ -95,6 +95,7 @@ bool esp32s3::OtaCheck() {
 #define OTA_HEADER_SIZE (sizeof(esp_image_header_t)+ sizeof(esp_image_segment_header_t) + sizeof(esp_app_desc_t) + sizeof(esp_custom_app_desc_t))
 
 OtaError esp32s3::OtaHeaderValidate(uint8_t const *data) {
+  assert(data != nullptr);
   OtaError ret = OtaError::OK;
   auto *new_header_info = static_cast<esp_image_header_t *>(malloc(sizeof(esp_image_header_t)));
   auto *new_app_info = static_cast<esp_app_desc_t *>(malloc(sizeof(esp_app_desc_t)));
@@ -147,8 +148,7 @@ OtaError esp32s3::OtaValidate() {
   fread(ota_data, OTA_HEADER_SIZE, 1, ota_file);
   fclose(ota_file);
 
-  OtaError valid = OtaHeaderValidate(ota_data);
-  if (valid != OtaError::OK) {
+  if (OtaError valid = OtaHeaderValidate(ota_data); valid != OtaError::OK) {
     ret = valid;
   }
 
@@ -219,8 +219,7 @@ void esp32s3::OtaInstallTask(void *arg) {
        update_partition->subtype,
        update_partition->address);
 
-  OtaError validation_err = board->OtaValidate();
-  if (validation_err != OtaError::OK) {
+  if (OtaError validation_err = board->OtaValidate(); validation_err != OtaError::OK) {
     ESP_LOGE(TAG, "validate failed with %d", (int) validation_err);
     board->_ota_error = validation_err;
 #ifdef CONFIG_ESP_ERR_TO_NAME_LOOKUP
@@ -317,7 +316,7 @@ void esp32s3::OtaInstallTask(void *arg) {
 size_t esp32s3::MemorySize() {
   return esp_psram_get_size();
 }
-esp_err_t esp32s3::esp32s3_usb_init(gpio_num_t usb_sense) {
+esp_err_t esp32s3::esp32s3_usb_init(const gpio_num_t usb_sense) {
 #if CFG_TUD_CDC
 
   constexpr tinyusb_config_cdcacm_t acm_cfg = {
@@ -368,7 +367,7 @@ esp_err_t esp32s3::esp32s3_usb_init(gpio_num_t usb_sense) {
   return tinyusb_driver_install(&tusb_cfg);
 }
 
-void esp32s3::VbusHandler(bool state) {
+void esp32s3::VbusHandler(const bool state) {
   if (state) {
     esp_rom_gpio_connect_in_signal(GPIO_MATRIX_CONST_ONE_INPUT, USB_SRP_BVALID_IN_IDX, false);
   } else {
@@ -389,7 +388,7 @@ void esp32s3::VbusHandler(bool state) {
 // Invoked right before tud_dfu_download_cb() (state=DFU_DNBUSY) or tud_dfu_manifest_cb() (state=DFU_MANIFEST)
 // Application return timeout in milliseconds (bwPollTimeout) for the next download/manifest operation.
 // During this period, USB host won't try to communicate with us.
-uint32_t tud_dfu_get_timeout_cb(uint8_t alt, uint8_t state) {
+uint32_t tud_dfu_get_timeout_cb(uint8_t, uint8_t state) {
   if (state == DFU_DNBUSY) {
     return 1;
   } else if (state == DFU_MANIFEST) {
@@ -405,7 +404,7 @@ esp_ota_handle_t update_handle = 0;
 // Invoked when received DFU_DNLOAD (wLength>0) following by DFU_GETSTATUS (state=DFU_DNBUSY) requests
 // This callback could be returned before flashing op is complete (async).
 // Once finished flashing, application must call tud_dfu_finish_flashing()
-void tud_dfu_download_cb(uint8_t alt, uint16_t block_num, uint8_t const *data, uint16_t length) {
+void tud_dfu_download_cb(uint8_t, uint16_t block_num, uint8_t const *data, uint16_t length) {
   esp_err_t err;
 
   LOGI(TAG, "Download BlockNum %u of length %u", block_num, length);
@@ -435,8 +434,7 @@ void tud_dfu_download_cb(uint8_t alt, uint16_t block_num, uint8_t const *data, u
          update_partition->subtype,
          update_partition->address);
 
-    Boards::OtaError validation_err = Boards::esp32::s3::esp32s3::OtaHeaderValidate(data);
-    if (validation_err != Boards::OtaError::OK) {
+    if (Boards::OtaError validation_err = Boards::esp32::s3::esp32s3::OtaHeaderValidate(data); validation_err != Boards::OtaError::OK) {
       ESP_LOGE(TAG, "validate failed with %d", (int) validation_err);
       tud_dfu_finish_flashing(DFU_STATUS_ERR_TARGET);
       return;
@@ -463,7 +461,7 @@ void tud_dfu_download_cb(uint8_t alt, uint16_t block_num, uint8_t const *data, u
 // Invoked when download process is complete, received DFU_DNLOAD (wLength=0) following by DFU_GETSTATUS (state=Manifest)
 // Application can do checksum, or actual flashing if buffered entire image previously.
 // Once finished flashing, application must call tud_dfu_finish_flashing()
-void tud_dfu_manifest_cb(uint8_t alt) {
+void tud_dfu_manifest_cb(uint8_t) {
   esp_err_t err;
   ESP_LOGI(TAG, "Download completed, Verifying");
 
@@ -492,30 +490,15 @@ void tud_dfu_manifest_cb(uint8_t alt) {
   tud_dfu_finish_flashing(DFU_STATUS_OK);
 }
 
-const char *upload_image[2] =
-{
-  "Hello world from TinyUSB DFU! - Partition 0",
-  "Hello world from TinyUSB DFU! - Partition 1"
-};
-
 // Invoked when received DFU_UPLOAD request
 // Application must populate data with up to length bytes and
 // Return the number of written bytes
-uint16_t tud_dfu_upload_cb(uint8_t alt, uint16_t block_num, uint8_t *data, uint16_t length) {
-  (void) block_num;
-  (void) length;
-
-  LOGI(TAG, "Upload BlockNum %u of length %u", alt, block_num, length);
-
-  auto const xfer_len = static_cast<uint16_t>(strlen(upload_image[alt]));
-  memcpy(data, upload_image[alt], xfer_len);
-
-  return xfer_len;
+uint16_t tud_dfu_upload_cb(uint8_t, uint16_t, uint8_t *, uint16_t) {
+  return 0;
 }
 
 // Invoked when the Host has terminated a download or upload transfer
-void tud_dfu_abort_cb(uint8_t alt) {
-  (void) alt;
+void tud_dfu_abort_cb(uint8_t) {
   LOGI(TAG, "Host aborted transfer");
 }
 
@@ -527,22 +510,3 @@ void tud_dfu_detach_cb(void) {
 }
 
 #endif
-
-const char *lltoa(long long val, int base) {
-  static char buf[64] = {0};
-
-  int i = 62;
-  int sign = (val < 0);
-  if (sign) val = -val;
-
-  if (val == 0) return "0";
-
-  for (; val && i; --i, val /= base) {
-    buf[i] = "0123456789abcdef"[val % base];
-  }
-
-  if (sign) {
-    buf[i--] = '-';
-  }
-  return &buf[i + 1];
-}

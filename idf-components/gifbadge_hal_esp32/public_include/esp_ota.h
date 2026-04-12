@@ -5,6 +5,7 @@
  ******************************************************************************/
 
 #pragma once
+#include <stdint.h>
 typedef struct {
   uint8_t num_supported_boards;
   uint8_t supported_boards[255];

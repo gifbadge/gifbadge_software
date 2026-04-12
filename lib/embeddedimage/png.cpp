@@ -5,13 +5,9 @@
  ******************************************************************************/
 
 #include "png.h"
-#include <string>
 #include "bitbank2.h"
-#include "bmp.h"
 #include "image.h"
-
 #include "resize.h"
-#include "simplebmp.h"
 
 image::PNGImage::~PNGImage() {
     png.close();
@@ -51,24 +47,24 @@ int image::PNGImage::resize(uint8_t *outBuf, int16_t x_start, int16_t y_start, i
     Resize resize(png.getWidth(), png.getHeight(), x, y, reinterpret_cast<uint16_t *>(outBuf), static_cast<uint8_t *>(_buffer)+64*1024);
     decoded = true;
     pngresize config = {&png, &resize, _buffer};
-    return png.decode((void *) &config, 0);
+    return png.decode(&config, 0);
 }
 bool image::PNGImage::resizable() {
-    // if (_buffer) {
-    //     return true;
-    // }
+    if (_buffer) {
+        return true;
+    }
     return false;
 }
 
-image::frameReturn image::PNGImage::GetFrame(uint8_t *outBuf, int16_t x, int16_t y, int16_t width) {
+image::frameReturn image::PNGImage::GetFrame(uint8_t *outBuf, int16_t x, int16_t y) {
     if (decoded) {
         png.close();
         png.open(_path, bb2OpenFile, bb2CloseFile, (readfile)bb2ReadFile, (seekfile)bb2SeekFile, PNGDraw);
     }
     decoded = true;
-    pnguser config = {.png = &png, .buffer = outBuf, .x = x, .y = y, .width = width};
-    png.decode((void *) &config, PNG_FAST_PALETTE);
-    return {image::frameStatus::END, 0};
+    pnguser config = {.png = &png, .buffer = outBuf, .x = x, .y = y, .width = resolution.first};
+    png.decode(&config, PNG_FAST_PALETTE);
+    return {frameStatus::END, 0};
 }
 
 int image::PNGImage::PNGDraw(PNGDRAW *pDraw) {

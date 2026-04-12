@@ -18,13 +18,11 @@
 
 static const char *TAG = "board_esp32s3_sdmmc";
 
-// #define USB_DISABLED
-
 namespace Boards {
 
 StorageInfo esp32::s3::esp32s3_sdmmc::GetStorageInfo() {
-  StorageType type = (card->ocr & SD_OCR_SDHC_CAP) ? StorageType_SDHC : StorageType_SD;
-  double speed = card->real_freq_khz / 1000.00;
+  const StorageType type = (card->ocr & SD_OCR_SDHC_CAP) ? StorageType_SDHC : StorageType_SD;
+  const double speed = card->real_freq_khz / 1000.00;
   uint64_t total_bytes;
   uint64_t free_bytes;
   esp_vfs_fat_info("/data", &total_bytes, &free_bytes);
@@ -32,16 +30,24 @@ StorageInfo esp32::s3::esp32s3_sdmmc::GetStorageInfo() {
 }
 
 void esp32::s3::esp32s3_sdmmc::Reset() {
-  if(tinyusb_msc_delete_storage(storage_handle) != ESP_OK){
-    LOGI(TAG, "Failed to unmount");
+#if CONFIG_TINYUSB_MSC_ENABLED
+  if (storage_handle != nullptr) {
+    if(tinyusb_msc_delete_storage(storage_handle) != ESP_OK){
+      LOGI(TAG, "Failed to unmount");
+    }
   }
+#endif
   esp32s3::Reset();
 }
 
 void esp32::s3::esp32s3_sdmmc::PowerOff() {
-  if(tinyusb_msc_delete_storage(storage_handle) != ESP_OK){
-    LOGI(TAG, "Failed to unmount");
+#if CONFIG_TINYUSB_MSC_ENABLED
+  if (storage_handle != nullptr) {
+    if(tinyusb_msc_delete_storage(storage_handle) != ESP_OK){
+      LOGI(TAG, "Failed to unmount");
+    }
   }
+#endif
 }
 
 int esp32::s3::esp32s3_sdmmc::StorageFormat() {
@@ -123,7 +129,7 @@ esp_err_t mount_sdmmc_slot(const sdmmc_host_t *host,
 
   LOGI(TAG, "Initializing SDCard");
 
-  esp_vfs_fat_sdmmc_mount_config_t mount_config = {
+  constexpr esp_vfs_fat_sdmmc_mount_config_t mount_config = {
     .format_if_mount_failed = false, .max_files = 5, .allocation_unit_size = 16 * 1024,
     .disk_status_check_enable = true, .use_one_fat = false
   };
@@ -164,7 +170,7 @@ esp_err_t esp32::s3::esp32s3_sdmmc::mount(const gpio_num_t clk,
 };
 
 
-#ifndef USB_DISABLED
+#if CONFIG_TINYUSB_MSC_ENABLED
   if (init_sdmmc_slot(&host, &slot_config, &card) == ESP_OK) {
     constexpr tinyusb_msc_driver_config_t usb_config = {
       .user_flags = {.auto_mount_off = 0},
@@ -188,6 +194,7 @@ esp_err_t esp32::s3::esp32s3_sdmmc::mount(const gpio_num_t clk,
       .mount_point = TINYUSB_MSC_STORAGE_MOUNT_APP
     };
     ESP_ERROR_CHECK(tinyusb_msc_new_storage_sdmmc(&config_sdmmc, &storage_handle));
+
     ESP_ERROR_CHECK(esp32s3_usb_init(usb_sense));
 
     storageAvailable = true;
@@ -202,6 +209,7 @@ esp_err_t esp32::s3::esp32s3_sdmmc::mount(const gpio_num_t clk,
   }
   return ESP_FAIL;
 #else
+  ESP_ERROR_CHECK(esp32s3_usb_init(usb_sense));
   return mount_sdmmc_slot(&host, &slot_config, &card);
 #endif
 }
@@ -210,7 +218,7 @@ bool esp32::s3::esp32s3_sdmmc::UsbConnected() {
   if(!storageAvailable){
     return false;
   }
-#ifndef USB_DISABLED
+#if CONFIG_TINYUSB_MSC_ENABLED
   tinyusb_msc_mount_point_t mount_status;
   tinyusb_msc_get_storage_mount_point(storage_handle, &mount_status);
   return mount_status == TINYUSB_MSC_STORAGE_MOUNT_USB;
@@ -218,8 +226,10 @@ bool esp32::s3::esp32s3_sdmmc::UsbConnected() {
   return false;
 #endif
 }
-int esp32::s3::esp32s3_sdmmc::UsbCallBack(tusb_msc_callback_t callback) {
+int esp32::s3::esp32s3_sdmmc::UsbCallBack(const tusb_msc_callback_t callback) {
+#if CONFIG_TINYUSB_MSC_ENABLED
   tinyusb_msc_set_storage_callback(callback, nullptr);
+#endif
   return 0;
 }
 }

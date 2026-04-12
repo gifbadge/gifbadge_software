@@ -40,7 +40,7 @@ npmx_error_t npmx_write(void *p_context, uint32_t register_address, uint8_t *p_d
   if (ret == ESP_OK) {
     return NPMX_SUCCESS;
   }
-  LOGE(TAG, "npmx_write failed: 0x%x", ret);
+  LOGE(TAG, "npmx_write failed: 0x%x %s", ret, esp_err_to_name(ret));
   return NPMX_ERROR_IO;
 }
 
@@ -53,8 +53,8 @@ npmx_error_t npmx_read(void *p_context, uint32_t register_address, uint8_t *p_da
   if (ret == ESP_OK) {
     return NPMX_SUCCESS;
   }
-  else if (ret != ESP_ERR_INVALID_STATE) {
-    LOGE(TAG, "npmx_read failed: 0x%x", ret);
+  else if (ret != ESP_ERR_INVALID_RESPONSE) {
+    LOGE(TAG, "npmx_read failed: 0x%x %s", ret, esp_err_to_name(ret));
   }
   return NPMX_ERROR_IO;
 }
@@ -187,7 +187,7 @@ void hal::pmic::esp32s3::PmicNpm1300::BatteryInserted() {
 hal::battery::Battery::State hal::pmic::esp32s3::PmicNpm1300::BatteryStatus() {
   uint8_t status;
   npmx_charger_status_get(npmx_charger_get(&_npmx_instance, 0), &status);
-  if(_charge_error != Charger::ChargeError::NONE){
+  if(_charge_error != ChargeError::NONE){
     return State::ERROR;
   }
   if(status & (NPMX_CHARGER_STATUS_TRICKLE_CHARGE_MASK | NPMX_CHARGER_STATUS_CONSTANT_CURRENT_MASK | NPMX_CHARGER_STATUS_CONSTANT_VOLTAGE_MASK)){
@@ -329,7 +329,7 @@ Boards::WakeupSource hal::pmic::esp32s3::PmicNpm1300::GetWakeup() {
   return _wakeup_source;
 }
 
-void hal::pmic::esp32s3::PmicNpm1300::PwrLedSet(hal::gpio::Gpio *gpio) {
+void hal::pmic::esp32s3::PmicNpm1300::PwrLedSet(gpio::Gpio *gpio) {
   _power_led = gpio;
   uint8_t status;
   npmx_vbusin_vbus_status_get(npmx_vbusin_get(&_npmx_instance, 0), &status);
@@ -342,7 +342,7 @@ void hal::pmic::esp32s3::PmicNpm1300::Init() {
   cc_set_current(&_npmx_instance);
   npmx_vbusin_suspend_mode_enable_set(npmx_vbusin_get(&_npmx_instance, 0), false);
 
-  _wakeup_source = ::get_wakeup(&_npmx_instance);
+  _wakeup_source = get_wakeup(&_npmx_instance);
 
   gpio_config_t int_gpio = {};
 
