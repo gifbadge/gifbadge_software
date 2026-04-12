@@ -121,9 +121,31 @@ int image::JPEG::resize(uint8_t *outBuf, int16_t x_start, int16_t y_start, int16
   jpeg.setPixelType(RGB565_LITTLE_ENDIAN);
   memset(outBuf, 0, sizeof(x*y*2));
 
-  Resize resize(jpeg.getWidth(), jpeg.getHeight(), x, y, reinterpret_cast<uint16_t *>(outBuf), static_cast<uint8_t *>(_buffer)+64*1024);
+  int decoderOptions = 0;
+  float ratio = 0.00;
+  int width = 0, height = 0;
+  if (jpeg.getWidth() > jpeg.getHeight()) {
+    ratio = static_cast<float>(x) / static_cast<float>(jpeg.getWidth());
+  } else {
+    ratio = static_cast<float>(y)/ static_cast<float>(jpeg.getHeight());
+  }
+  if (ratio < 0.15) {
+    decoderOptions = JPEG_SCALE_EIGHTH;
+    width = jpeg.getWidth()*0.15;
+    height = jpeg.getHeight()*0.15;
+  } else if (ratio < 0.25) {
+    decoderOptions = JPEG_SCALE_QUARTER;
+    width = jpeg.getWidth()*0.25;
+    height = jpeg.getHeight()*0.25;
+  } else if (ratio < 0.5) {
+    decoderOptions = JPEG_SCALE_HALF;
+    width = jpeg.getWidth()*0.5;
+    height = jpeg.getHeight()*0.5;
+  }
+
+  Resize resize(width, height, x, y, reinterpret_cast<uint16_t *>(outBuf), static_cast<uint8_t *>(_buffer)+64*1024);
   decoded = true;
-  jpgresize config = {static_cast<uint16_t *>(_buffer), jpeg.getWidth(), jpeg.getHeight(), &resize, 0};
+  jpgresize config = {static_cast<uint16_t *>(_buffer), width, height, &resize, 0};
   jpeg.setUserPointer(&config);
-  return jpeg.decode(0, 0, 0)==0;
+  return jpeg.decode(0, 0, decoderOptions)==0;
   }
