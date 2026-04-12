@@ -71,8 +71,8 @@ image::GIF::~GIF() {
   (*_gif.pfnClose)(_gif.GIFFile.fHandle);
 }
 
-image::frameReturn image::GIF::GetFrame(uint8_t *outBuf, int16_t x, int16_t y, int16_t width) {
-  GIFUser gifuser = {outBuf, x, y, width};
+image::frameReturn image::GIF::GetFrame(uint8_t *outBuf, int16_t x, int16_t y) {
+  GIFUser gifuser = {outBuf, x, y, resolution.first};
   int frameDelay;
   if (_gif.GIFFile.iPos >= _gif.GIFFile.iSize - 1) // no more data exists
   {
@@ -185,7 +185,6 @@ int image::GIF::Open(void *buffer) {
       return -1;
     }
     _gif.ucDrawType = GIF_DRAW_COOKED;
-    width = _gif.iCanvasWidth;
     return 0;
   }
   return -1;

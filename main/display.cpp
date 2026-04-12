@@ -51,7 +51,7 @@ class ErrorImage : public Image {
     snprintf(_error, sizeof(_error) - 1, fmt, std::forward<Args>(args) ...);
   };
 
-  frameReturn GetFrame(uint8_t *outBuf, int16_t x, int16_t y, int16_t width) override {
+  frameReturn GetFrame(uint8_t *outBuf, int16_t x, int16_t y) override {
     for (int i = 0; i < resolution.first * resolution.second; i++) {
       reinterpret_cast<uint16_t *>(outBuf)[i] = 0x2966;
     }
@@ -116,7 +116,7 @@ static image::frameReturn displayFile(std::unique_ptr<image::Image> &in, hal::di
     xOffset = static_cast<int16_t>((display->size.first / 2) - ((in->Size().first +1) / 2));
     yOffset = static_cast<int16_t>((display->size.second / 2) - ((in->Size().second + 1) / 2));
   }
-  status = in->GetFrame(display->buffer, xOffset, yOffset, display->size.first);
+  status = in->GetFrame(display->buffer, xOffset, yOffset);
   if (status.first == image::frameStatus::ERROR) {
     LOGI(TAG, "Image loop error. Frame %d", frame_count);
     return {image::frameStatus::ERROR, 0};
@@ -263,7 +263,7 @@ static image::Image *openFile(const char *path, hal::display::Display *display) 
     if(size > display->size && in->resizable() == true) {
       int64_t start = millis();
       auto *resizing = new image::ResizingImage(display->size);
-      resizing->GetFrame(display->buffer, 0, 0, display->size.first);
+      resizing->GetFrame(display->buffer, 0, 0);
       display->write(0, 0, display->size.first, display->size.second, display->buffer);
       delete resizing;
       memset(display->buffer, 0, display->size.first*display->size.second*2);

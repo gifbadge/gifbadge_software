@@ -62,14 +62,14 @@ int image::JPEG::Open(void *buffer) {
   return ret==0; //Invert the return value
 }
 
-image::frameReturn image::JPEG::GetFrame(uint8_t *outBuf, int16_t x, int16_t y, int16_t width) {
+image::frameReturn image::JPEG::GetFrame(uint8_t *outBuf, int16_t x, int16_t y) {
   if (decoded) {
     jpeg.close();
     jpeg.open(_path, bb2OpenFile, bb2CloseFile, (readfile)bb2ReadFile, (seekfile)bb2SeekFile, JPEGDraw);
     jpeg.setPixelType(RGB565_LITTLE_ENDIAN);
   }
   decoded = true;
-  pnguser config = {.png = nullptr, .buffer = outBuf, .x = x, .y = y, .width = width};
+  pnguser config = {.png = nullptr, .buffer = outBuf, .x = x, .y = y, .width = resolution.first};
   jpeg.setUserPointer(&config);
   jpeg.decode(0, 0, 0);
   _lastError = jpeg.getLastError();

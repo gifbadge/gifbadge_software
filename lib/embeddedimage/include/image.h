@@ -37,10 +37,9 @@ class Image {
    * @param outBuf the buffer to write too
    * @param x offset in x direction
    * @param y offset in y direction
-   * @param width width of the display
    * @return
    */
-  virtual frameReturn GetFrame(uint8_t *outBuf, int16_t x, int16_t y, int16_t width) { return {frameStatus::OK, 0}; };
+  virtual frameReturn GetFrame(uint8_t *outBuf, int16_t x, int16_t y) { return {frameStatus::OK, 0}; };
 
   /**
    * Get the size of the image. Can only be called after image is opened with Open()

@@ -60,13 +60,13 @@ bool image::PNGImage::resizable() {
     return false;
 }
 
-image::frameReturn image::PNGImage::GetFrame(uint8_t *outBuf, int16_t x, int16_t y, int16_t width) {
+image::frameReturn image::PNGImage::GetFrame(uint8_t *outBuf, int16_t x, int16_t y) {
     if (decoded) {
         png.close();
         png.open(_path, bb2OpenFile, bb2CloseFile, (readfile)bb2ReadFile, (seekfile)bb2SeekFile, PNGDraw);
     }
     decoded = true;
-    pnguser config = {.png = &png, .buffer = outBuf, .x = x, .y = y, .width = width};
+    pnguser config = {.png = &png, .buffer = outBuf, .x = x, .y = y, .width = resolution.first};
     png.decode((void *) &config, PNG_FAST_PALETTE);
     return {image::frameStatus::END, 0};
 }
