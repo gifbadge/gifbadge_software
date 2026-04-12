@@ -61,7 +61,7 @@ static int32_t SeekFile(GIFFILE *pFile, int32_t iPosition) {
   return 0;
 }
 
-image::GIF::GIF(screenResolution res, const char *path):Image(res, path) {};
+image::GIF::GIF(screenResolution res, const char *path):Image(res, path) {}
 
 image::GIF::~GIF() {
   if (_gif.pFrameBuffer != nullptr) {
@@ -139,7 +139,7 @@ void image::GIF::GIFDraw(GIFDRAW *pDraw) {
 }
 
 image::Image *image::GIF::Create(screenResolution res, const char *path) {
-  return new image::GIF(res, path);
+  return new GIF(res, path);
 }
 
 int image::GIF::Open(void *buffer) {

@@ -5,13 +5,10 @@
  ******************************************************************************/
 
 #include "jpeg.h"
-#include <string>
-
 #include "bitbank2.h"
 #include "png.h"
 #include "image.h"
 #include "resize.h"
-#include "simplebmp.h"
 
 bool image::JPEG::resizable() {
   if (_buffer) {
@@ -29,7 +26,7 @@ std::pair<int16_t, int16_t> image::JPEG::Size() {
 }
 
 image::Image *image::JPEG::Create(screenResolution res, const char *path) {
-    return new image::JPEG(res, path);
+    return new JPEG(res, path);
 }
 
 int JPEGDraw(JPEGDRAW *pDraw){
@@ -73,7 +70,7 @@ image::frameReturn image::JPEG::GetFrame(uint8_t *outBuf, int16_t x, int16_t y) 
   jpeg.setUserPointer(&config);
   jpeg.decode(0, 0, 0);
   _lastError = jpeg.getLastError();
-  return {image::frameStatus::END, 0};
+  return {frameStatus::END, 0};
 }
 
 const char * image::JPEG::GetLastError() {
@@ -92,7 +89,7 @@ const char * image::JPEG::GetLastError() {
         return "JPEG_PROGRESSIVE_NOT_SUPPORTED";
       default:
         return "UNKNOWN";
-    };
+    }
 }
 
 struct jpgresize {

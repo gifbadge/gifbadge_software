@@ -10,7 +10,7 @@ void *bb2OpenFile(const char *fname, int32_t *pSize) {
         fseek(infile, 0, SEEK_END);
         *pSize = ftell(infile);
         rewind(infile);
-        return (void *) infile;
+        return infile;
     }
     return nullptr;
 } /* GIFOpenFile() */
@@ -36,6 +36,6 @@ int32_t bb2ReadFile(bb2_file_tag *pFile, uint8_t *pBuf, int32_t iLen) {
 int32_t bb2SeekFile(bb2_file_tag *pFile, int32_t iPosition) {
     FILE *infile = (FILE *)(pFile->fHandle);
     fseek(infile, iPosition, SEEK_SET);
-    pFile->iPos = (int32_t) ftell(infile);
+    pFile->iPos = ftell(infile);
     return pFile->iPos;
 } /* GIFSeekFile() */
