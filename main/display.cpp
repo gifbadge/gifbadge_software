@@ -5,12 +5,14 @@
  ******************************************************************************/
 
 #include "FreeRTOS.h"
+#include <timers.h>
 
 #include "portable_time.h"
 #include "log.h"
 
 #include "display.h"
 #include <memory>
+#include <cstring>
 #include <sys/stat.h>
 
 #include "image.h"

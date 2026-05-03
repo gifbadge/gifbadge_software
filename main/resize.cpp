@@ -7,7 +7,9 @@
 #include "resize.h"
 
 #include <directory.h>
+#ifdef ESP_PLATFORM
 #include <esp_heap_caps.h>
+#endif
 #include <hw_init.h>
 #include <JPEGENC.h>
 #include <jpegenc.inl>

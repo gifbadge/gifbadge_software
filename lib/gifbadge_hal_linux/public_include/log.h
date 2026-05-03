@@ -10,3 +10,5 @@
 #define DEBUG 0
 #define LOGI(tag, format, ...) console_print(tag, format, ##__VA_ARGS__)
 #define LOGD(tag, format, ...) do { if (DEBUG) console_print(tag, format, ##__VA_ARGS__); } while (0)
+#define LOGE(tag, format, ...) console_print(tag, format, ##__VA_ARGS__)
+

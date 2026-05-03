@@ -14,11 +14,11 @@ hal::touch::oslinux::touch_sdl *touchSdl;
 hal::touch::oslinux::touch_sdl::touch_sdl() {
   _debounce_states = zmk_debounce_state{false, false, 0};
 }
-std::pair<int16_t, int16_t> hal::touch::oslinux::touch_sdl::read() {
+hal::touch::touch_data hal::touch::oslinux::touch_sdl::read() {
   if (zmk_debounce_is_pressed(&_debounce_states)) {
-    return last_touch;
+    return {TOUCH_PRESS, last_touch};
   }
-  return {-1, -1};
+  return {TOUCH_RELEASE, {-1, -1}};
 }
 void hal::touch::oslinux::touch_sdl::update(SDL_Event event) {
   if (event.type == SDL_EVENT_MOUSE_MOTION) {

@@ -14,7 +14,7 @@ namespace hal::touch::oslinux {
 class touch_sdl : public hal::touch::Touch {
   public:
     touch_sdl();
-    std::pair<int16_t, int16_t> read() override;
+    touch_data read() override;
     void update(SDL_Event event);
   private:
     zmk_debounce_state _debounce_states;
