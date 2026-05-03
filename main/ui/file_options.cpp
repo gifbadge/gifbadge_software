@@ -97,7 +97,7 @@ static void FileOptionsFileSelect(lv_event_t *e) {
 }
 
 static void FileOptionsCardSelect(lv_event_t *e) {
-  char *current = lv_label_get_text(static_cast<lv_obj_t *>(lv_event_get_target(e)));
+  char *current = lv_label_get_text(static_cast<lv_obj_t *>(lv_event_get_user_data(e)));
 #ifdef ESP_PLATFORM
   lv_obj_t *file_window = file_select("/data/", current, false);
 #else
@@ -105,7 +105,7 @@ static void FileOptionsCardSelect(lv_event_t *e) {
   getcwd(path, sizeof(path));
   lv_obj_t *file_window = file_select("/data/", current, false);
 #endif
-  lv_obj_add_event_cb(file_window, FileWindowClose, LV_EVENT_DELETE, lv_event_get_target(e));
+  lv_obj_add_event_cb(file_window, FileWindowClose, LV_EVENT_DELETE, lv_event_get_user_data(e));
 }
 
 static void FileOptionsMutuallyExclusive(lv_event_t *e) {
@@ -277,8 +277,8 @@ lv_obj_t *FileOptions() {
 
     //Callbacks
     lv_obj_add_event_cb(file_label, FileOptionsFileSelect, LV_EVENT_CLICKED, nullptr);
-    lv_obj_add_event_cb(card_up_label, FileOptionsCardSelect, LV_EVENT_CLICKED,nullptr);
-    lv_obj_add_event_cb(card_down_label, FileOptionsCardSelect, LV_EVENT_CLICKED, nullptr);
+    lv_obj_add_event_cb(card_up_number, FileOptionsCardSelect, LV_EVENT_CLICKED,card_up_label);
+    lv_obj_add_event_cb(card_down_number, FileOptionsCardSelect, LV_EVENT_CLICKED, card_down_label);
 
 
 
