@@ -36,7 +36,7 @@ if (ESP_PLATFORM)
     target_link_options(JPEGDEC    PUBLIC ${ESP_COMPILE_OPTIONS})
 endif ()
 
-SET(SRC "image.cpp" "bitbank2.cpp" "jpeg.cpp" "png.cpp" "gif.cpp" "bmp.cpp" "resize.cpp" ${PNGdec_src} )
+SET(SRC "image.cpp" "bitbank2.cpp" "jpeg.cpp" "png.cpp" "gif.cpp" "bmp.cpp" "resize.cpp" ${PNGdec_src} ${CMAKE_SOURCE_DIR}/external-deps/AnimatedGIF/src/s3_transparent.S "s3_palette_buffer.S")
 
 SET(INCLUDE "include"
         "${CMAKE_SOURCE_DIR}/external-deps/AnimatedGIF/src"

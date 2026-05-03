@@ -71,23 +71,35 @@ image::GIF::~GIF() {
   (*_gif.pfnClose)(_gif.GIFFile.fHandle);
 }
 
-image::frameReturn image::GIF::GetFrame(uint8_t *outBuf, int16_t x, int16_t y) {
-  GIFUser gifuser = {outBuf, x, y, resolution.first};
+#if defined (ARDUINO_ESP32S3_DEV) && !defined(NO_SIMD)
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
+  void s3_palette_buffer(uint8_t *pSrc, uint8_t *pRGB565, uint16_t *pTransparent, int iLen, uint32_t *pPalette);
+#ifdef __cplusplus
+}
+#endif // __cplusplus
+#endif // ESP32S3 SIMD
+
+uint32_t __attribute__((aligned(16))) u32Palette[256]; //This seems to perform better when not on the stack.
+
+image::frameReturn image::GIF::GetFrame(uint8_t *outBuf, int16_t offsetX, int16_t offsetY) {
+  GIFUser gifuser = {reinterpret_cast<uint16_t *>(outBuf), offsetX, offsetY, resolution.first};
   int frameDelay;
   if (_gif.GIFFile.iPos >= _gif.GIFFile.iSize - 1) // no more data exists
   {
     (*_gif.pfnSeek)(&_gif.GIFFile, 0); // seek to start
   }
-  // int ret = playFrame(&frameDelay, &gifuser);
   if (GIFParseInfo(&_gif, 0)) {
     int rc;
-    _gif.pUser = &gifuser;
     if (_gif.iError == GIF_EMPTY_FRAME) // don't try to decode it
       return {frameStatus::OK, frameDelay};
     if (_gif.pTurboBuffer) {
       rc = DecodeLZWTurbo(&_gif, 0);
     } else {
+      _gif.pUser = &gifuser;
       rc = DecodeLZW(&_gif, 0);
+      _gif.pUser = nullptr;
     }
     if (rc != 0) // problem
       return {frameStatus::ERROR, 0};
@@ -103,20 +115,39 @@ image::frameReturn image::GIF::GetFrame(uint8_t *outBuf, int16_t x, int16_t y) {
   }
   frameDelay = _gif.iFrameDelay;
   if (!_gif.pfnDraw) {
-    if (x > 0 || y > 0) {
-      // Handle cases where the GIF is smaller than the screen resolution
-      auto *buffer = reinterpret_cast<uint16_t *>(outBuf);
-      for (int i = 0; i < _gif.iCanvasHeight; i++) {
-        int write_offset = resolution.second * (i + y) + x;
-        int read_offset = (_gif.iCanvasWidth * _gif.iCanvasHeight) + (_gif.iCanvasWidth * i * 2);
-        memcpy(&buffer[write_offset], &_gif.pFrameBuffer[read_offset], _gif.iCanvasWidth * 2);
-      }
-    } else {
-      // GIF matches screen resolution
-      memcpy(outBuf,
-             &_gif.pFrameBuffer[resolution.first * resolution.second],
-             resolution.first * resolution.second * 2);
+    uint16_t *pPalette = (_gif.bUseLocalPalette) ? _gif.pLocalPalette : _gif.pPalette;
+    uint16_t transparent = _gif.ucTransparent;
+    uint8_t ucHasTransparency = _gif.ucGIFBits & 1;
+    uint16_t *pTransparent = ucHasTransparency ? &transparent : nullptr;
+
+    for (int x = 0; x < 256; x++) {
+      u32Palette[x] = pPalette[x]; // expand 16->32bit entries for SIMD code
     }
+    for (int y = 0; y < _gif.iHeight; y++) {
+      int localY = y;
+      // Ugly logic to handle the interlaced line position, but it
+      // saves having to have another set of state variables
+      if (_gif.ucMap & 0x40) {
+        // interlaced?
+        int height = _gif.iHeight - 1;
+        if (localY > height / 2)
+          localY = localY * 2 - (height | 1);
+        else if (localY > height / 4)
+          localY = localY * 4 - ((height & ~1) | 2);
+        else if (localY > height / 8)
+          localY = localY * 8 - ((height & ~3) | 4);
+        else
+          localY = localY * 8;
+      }
+      void *pBuf = _gif.pTurboBuffer+_gif.iCanvasWidth * _gif.iCanvasHeight;
+      std::size_t sz = TURBO_BUFFER_SIZE;
+      auto *pAligned = static_cast<uint8_t *>(std::align(16, _gif.iWidth, pBuf, sz));
+      memcpy(pAligned, &_gif.pTurboBuffer[(localY * _gif.iWidth)], _gif.iWidth);//Prevents Tearing like effect. Assuming that's memory alignment issues.
+      uint8_t *fb = _gif.pFrameBuffer;
+      fb += 2 * (_gif.iX+offsetX) + (localY + _gif.iY+offsetY) * (resolution.first * 2);
+      s3_palette_buffer(pAligned, fb, pTransparent, _gif.iWidth, u32Palette);
+    }
+      memcpy(outBuf, _gif.pFrameBuffer, resolution.first * resolution.second * 2);
   }
 
   if (_gif.GIFFile.iPos < _gif.GIFFile.iSize - 10 == false) {
@@ -131,7 +162,7 @@ std::pair<int16_t, int16_t> image::GIF::Size() {
 
 void image::GIF::GIFDraw(GIFDRAW *pDraw) {
   auto *gifuser = static_cast<GIFUser *>(pDraw->pUser);
-  auto *buffer = reinterpret_cast<uint16_t *>(gifuser->buffer);
+  auto *buffer = gifuser->buffer;
 
   int y = pDraw->iY + pDraw->y + gifuser->y; // current line
   uint16_t *d = &buffer[gifuser->x + pDraw->iX + (y * gifuser->width)];
@@ -167,24 +198,27 @@ int image::GIF::Open(void *buffer) {
   }
 
   if (GIFInit(&_gif)) {
+    _gif.ucDrawType = GIF_DRAW_COOKED;
     if (buffer) {
       _gif.pTurboBuffer = static_cast<uint8_t *>(buffer);
+      _gif.pFrameBuffer = static_cast<unsigned char *>(aligned_alloc(16, resolution.first * resolution.second * 2));
+      _gif.ucDrawType = GIF_DRAW_RAW;
     }
     else {
+      _gif.pFrameBuffer = static_cast<unsigned char *>(aligned_alloc(16, resolution.first * resolution.second * 3));
       printf("Turbo Buffer is null\n");
     }
-
-    _gif.pFrameBuffer = static_cast<unsigned char *>(malloc(_gif.iCanvasWidth * _gif.iCanvasHeight * 3));
     if (_gif.pFrameBuffer == nullptr) {
       printf("Malloc full sized buffer failed. Falling back to row buffer\n");
       _gif.pFrameBuffer = static_cast<unsigned char *>(malloc(_gif.iCanvasWidth * (_gif.iCanvasHeight + 3)));
       _gif.pfnDraw = GIFDraw;
+      _gif.ucDrawType = GIF_DRAW_COOKED;
     }
     if (_gif.pFrameBuffer == nullptr) {
       _gif.iError = GIF_ERROR_MEMORY;
       return -1;
     }
-    _gif.ucDrawType = GIF_DRAW_COOKED;
+    memset(_gif.pFrameBuffer, 0x0, resolution.first*resolution.second*2);
     return 0;
   }
   return -1;

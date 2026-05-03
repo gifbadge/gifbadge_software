@@ -121,7 +121,7 @@ const char *esp32::s3::mini::v0_3::Name() {
 }
 
 void esp32::s3::mini::v0_3::LateInit() {
-  buffer = heap_caps_malloc(240 * 240 + 0x6100, MALLOC_CAP_INTERNAL);
+  buffer = heap_caps_aligned_alloc(16, 240 * 240 + 0x6100, MALLOC_CAP_INTERNAL);
   constexpr i2c_master_bus_config_t i2c_mst_config = {
     .i2c_port = I2C_NUM_0,
     .sda_io_num = GPIO_NUM_6,

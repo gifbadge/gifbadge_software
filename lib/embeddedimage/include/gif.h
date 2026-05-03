@@ -10,7 +10,7 @@
 #include "image.h"
 
 struct GIFUser{
-    uint8_t *buffer;
+    uint16_t *buffer;
   int16_t x;
   int16_t y;
     int32_t width;
@@ -26,7 +26,7 @@ public:
 
     int Open(void *buffer) override;
 
-  frameReturn GetFrame(uint8_t *outBuf, int16_t x, int16_t y) override;
+  frameReturn GetFrame(uint8_t *outBuf, int16_t offsetX, int16_t offsetY) override;
 
     std::pair<int16_t, int16_t> Size() final;
 
